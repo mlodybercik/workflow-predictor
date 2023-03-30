@@ -1,6 +1,28 @@
 # workflow-predictor
 Zespołowe Przedsięwzięcie Inżynierskie, projekt dla Credit Suisse
 
+## Dane
+Do pracy wrzućcie sobie dane do folderu `data/`, wyłączyłem w gitignore ten duży plik co dostaliśmy od Grzesia żeby go w tej formie nie trzymać.
+W rubryce params znajdują się następujące parametry:
+```python
+{'processing-location', 'bsinp-run-id', 'api-version', 'correlation-id', 'flow-type', 'batch-workflow', 'rd-run-id', 'batch-instance-seq', 'chf-usd-rate', 'skip-mdl-out', 'pb-run-id', 'setenv', 'regulatory-approaches', 'business-date', 'skip-mdl-landing', 'ib-run-id', 'as-of-date', 'failed-job-status', 'as-of-datetime', 'failed-job-uid', 'source-type', 'rules-branch', 'failed-job-id', 'scenario-workflow', 'process-flag', 'hac-run-id', 'business-day'}
+```
+te parametry to są wszystkie jakie istnieją, prawdopodobnie nie potrzebujemy wszystkich.
+
+|uid|parent_uid|kafka_offset|cmd_time|event_time|workflow_name|job_name|business_date|params|status|skip-mdl-out|rd-run-id|as-of-date|pb-run-id|rules-branch|hac-run-id|api-version|skip-mdl-landing|as-of-datetime|failed-job-id|ib-run-id|batch-workflow|failed-job-uid|processing-location|batch-instance-seq|business-date|business-day|chf-usd-rate|setenv|process-flag|regulatory-approaches|correlation-id|failed-job-status|flow-type|scenario-workflow|bsinp-run-id|source-type|
+|---|----------|------------|--------|----------|-------------|--------|-------------|------|------|------------|---------|----------|---------|------------|----------|-----------|----------------|--------------|-------------|---------|--------------|--------------|-------------------|------------------|-------------|------------|------------|------|------------|---------------------|--------------|-----------------|---------|-----------------|------------|-----------|
+|1be997ff0fa411ed9efe4be67384bf3f||546082|2022-07-30 05:08:24.0|2022-07-30 05:08:24.0|strategic-flow|f1-notification-trigger|2022-07-29||PROCESSING|||2022-07-29||||||2022-07-30_03.08.13|||STRATEGIC_PAC||PAC||2022-07-29|BD0|||||||STRATEGIC||||
+|1be997ff0fa411ed9efe4be67384bf3f||546084|2022-07-30 05:08:24.0|2022-07-30 05:08:24.0|strategic-flow|f1-notification-trigger|2022-07-29||SUCCESS|||2022-07-29||||||2022-07-30_03.08.13|||STRATEGIC_PAC||PAC||2022-07-29|BD0|||||||STRATEGIC||||
+|1bf0c3f00fa411ed9efe75307937e094|1be997ff0fa411ed9efe4be67384bf3f|546086|2022-07-30 05:08:24.0|2022-07-30 05:08:24.0|strategic-flow|open-date-card|2022-07-29||SUBMITTED|||2022-07-29||||||2022-07-30_03.08.13|||STRATEGIC_PAC||PAC||2022-07-29|BD0|||||||STRATEGIC||||
+|1bf0c3f00fa411ed9efe75307937e094|1be997ff0fa411ed9efe4be67384bf3f|546088|2022-07-30 05:08:24.0|2022-07-30 05:08:24.0|strategic-flow|open-date-card|2022-07-29||PROCESSING|||2022-07-29||||||2022-07-30_03.08.13|||STRATEGIC_PAC||PAC||2022-07-29|BD0|||||||STRATEGIC||||
+|1bf0c3f00fa411ed9efe75307937e094|1be997ff0fa411ed9efe4be67384bf3f|546090|2022-07-30 05:08:24.0|2022-07-30 05:08:25.0|strategic-flow|open-date-card|2022-07-29||SUCCESS|||2022-07-29||||||2022-07-30_03.08.13|||STRATEGIC_PAC||PAC||2022-07-29|BD0|||||||STRATEGIC||||
+
+Tutaj zostawiam te które moim zdaniem (Przemek) mają najwięcej w sobie informacji.
+flow-type|event_time|hac-run-id|status|batch-workflow|as-of-datetime|batch-instance-seq|regulatory-approaches|uid|business_date|parent_uid|as-of-date|business-day|processing-location|workflow_name|job_name|rules-branch|ib-run-id|skip-mdl-out|business-date|cmd_time
+---------|----------|----------|------|--------------|--------------|------------------|---------------------|---|-------------|----------|----------|------------|-------------------|-------------|--------|------------|---------|------------|-------------|--------
+STRATEGIC|2022-07-30 05:08:24.0||PROCESSING|STRATEGIC_PAC|2022-07-30_03.08.13|||1be997ff0fa411ed9efe4be67384bf3f|2022-07-29||2022-07-29|BD0|PAC|strategic-flow|f1-notification-trigger||||2022-07-29|2022-07-30 05:08:24.0
+STRATEGIC|2022-07-30 05:08:24.0||SUCCESS|STRATEGIC_PAC|2022-07-30_03.08.13|||1be997ff0fa411ed9efe4be67384bf3f|2022-07-29||2022-07-29|BD0|PAC|strategic-flow|f1-notification-trigger||||2022-07-29|2022-07-30 05:08:24.0
+STRATEGIC|2022-07-30 05:08:24.0||SUBMITTED|STRATEGIC_PAC|2022-07-30_03.08.13|||1bf0c3f00fa411ed9efe75307937e094|2022-07-29|1be997ff0fa411ed9efe4be67384bf3f|2022-07-29|BD0|PAC|strategic-flow|open-date-card||||2022-07-29|2022-07-30 05:08:24.0
 
 ## Źródła
 (prawdopodobnie bedziecie potrzebowali proxy uczelnianego)
