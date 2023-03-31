@@ -23,20 +23,22 @@ failed = lambda row: not bool(row["failed-job-id"])
 to_remove = [failed]
 
 # which columns to remove?
-columns_to_remove = {
-    "kafka_offset", "api-version", "skip-mdl-landing", "rd-run-id", "pb-run-id",
-    "failed-job-id", "failed-job-uid", "chf-usd-rate", "setenv", "process-flag",
-    "correlation-id", "failed-job-status", "scenario-workflow", "bsinp-run-id",
-    "source-type", "params"
-}
+# columns_to_remove = {
+#     "kafka_offset", "api-version", "skip-mdl-landing", "rd-run-id", "pb-run-id",
+#     "failed-job-id", "failed-job-uid", "chf-usd-rate", "setenv", "process-flag",
+#     "correlation-id", "failed-job-status", "scenario-workflow", "bsinp-run-id",
+#     "source-type", "params"
+# }
+
+columns_to_remove = {"params"}
 
 with open("data/maestro-history-clean.csv", "w") as file_w:
     with open("data/maestro-history.csv") as file_r:
-        reader = csv.DictReader(file_r)
+        reader = csv.DictReader(file_r, lineterminator="\n")
         header = set([*next(reader), *all_commands])
         header.difference_update(columns_to_remove)
 
-        writer = csv.DictWriter(file_w, header)
+        writer = csv.DictWriter(file_w, header, lineterminator="\n")
         writer.writeheader()
 
         for line in reader:

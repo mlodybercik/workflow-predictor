@@ -20,14 +20,14 @@ done = dict()
 
 with open("data/maestro-calculated.csv", "w") as file_w:
     with open("data/maestro-history-clean.csv") as file_r:
-        reader = csv.DictReader(file_r)
+        reader = csv.DictReader(file_r, lineterminator="\n")
         headers = {
             "cmd_processing_time", "cmd_success_time",
             "event_processing_time", "event_success_time",
             *reader.fieldnames
         }
         [headers.remove(i) for i in ["status", "event_time", "cmd_time"]]
-        writer = csv.DictWriter(file_w, headers)
+        writer = csv.DictWriter(file_w, headers, lineterminator="\n")
         writer.writeheader()
 
         for row in reader:
