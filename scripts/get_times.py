@@ -4,11 +4,11 @@ from datetime import datetime
 STATES = {"PROCESSING", "SUCCESS", "SUBMITTED"}
 
 # im gonna create four columns:
-# time from submitted to processing in cmd_time
-# time from submitted to successs   in cmd_time
+# time from submitted to processing in cmd_time -> cmd_processing_time
+# time from submitted to successs   in cmd_time -> cmd_success_time
 # and 
-# time from submitted to processing in event_time
-# time from submitted to successs   in event_time
+# time from submitted to processing in event_time -> event_processing_time
+# time from submitted to successs   in event_time -> event_success_time
 
 def get_time(text: str):
     # time looks like this: 2022-07-30 05:08:24.0
