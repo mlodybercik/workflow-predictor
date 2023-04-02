@@ -3,12 +3,11 @@ from datetime import datetime
 
 STATES = {"PROCESSING", "SUCCESS", "SUBMITTED"}
 
-# im gonna create four columns:
-# time from submitted to processing in cmd_time -> cmd_processing_time
-# time from submitted to successs   in cmd_time -> cmd_success_time
+# im gonna create three columns:
 # and 
-# time from submitted to processing in event_time -> event_processing_time
-# time from submitted to successs   in event_time -> event_success_time
+# time from submitted to processing in event_time -> event-waiting-time
+# time from processing to successs  in event_time -> event-processing-time
+# time from submitted to successs   in event_time -> event-total-time
 
 def get_time(text: str):
     # time looks like this: 2022-07-30 05:08:24.0
@@ -22,10 +21,10 @@ with open("data/maestro-calculated.csv", "w") as file_w:
     with open("data/maestro-history-clean.csv") as file_r:
         reader = csv.DictReader(file_r, lineterminator="\n")
         headers = {
-            "cmd_processing_time", "cmd_success_time",
-            "event_processing_time", "event_success_time",
-            *reader.fieldnames
+            "event-waiting-time", "event-processing-time",
+            "event-total-time", *reader.fieldnames
         }
+
         [headers.remove(i) for i in ["status", "event_time", "cmd_time"]]
         writer = csv.DictWriter(file_w, headers, lineterminator="\n")
         writer.writeheader()
@@ -37,26 +36,24 @@ with open("data/maestro-calculated.csv", "w") as file_w:
                 grouper[row["uid"]][row["status"]] = row
 
                 if not any([i == None for i in grouper[row["uid"]].values()]):
-                    event_time_success = get_time(grouper[row["uid"]]["SUCCESS"]["event_time"])
-                    event_time_submitted = get_time(grouper[row["uid"]]["SUBMITTED"]["event_time"])
-                    event_time_processing = get_time(grouper[row["uid"]]["PROCESSING"]["event_time"])
+                    time_success = get_time(grouper[row["uid"]]["SUCCESS"]["event_time"])
+                    time_submitted = get_time(grouper[row["uid"]]["SUBMITTED"]["event_time"])
+                    time_processing = get_time(grouper[row["uid"]]["PROCESSING"]["event_time"])
 
-                    cmd_time_success = get_time(grouper[row["uid"]]["SUCCESS"]["cmd_time"])
-                    cmd_time_submitted = get_time(grouper[row["uid"]]["SUBMITTED"]["cmd_time"])
-                    cmd_time_processing = get_time(grouper[row["uid"]]["PROCESSING"]["cmd_time"])
+                    event_waiting_time = int((time_processing - time_submitted).total_seconds())
+                    event_processing_time = int((time_success - time_processing).total_seconds())
 
-                    cmd_processing_time = int((cmd_time_processing - cmd_time_submitted).total_seconds())
-                    cmd_success_time = int((cmd_time_success - cmd_time_submitted).total_seconds())
-                    event_processing_time = int((event_time_processing - event_time_submitted).total_seconds())
-                    event_success_time = int((event_time_success - event_time_submitted).total_seconds())
+                    # to to samo xD
+                    # event_total_time = event_waiting_time + event_processing_time
+                    event_total_time = int((time_success - time_submitted).total_seconds())
 
                     new_row = {
-                        "cmd_processing_time": cmd_processing_time,
-                        "cmd_success_time": cmd_success_time,
-                        "event_processing_time": event_processing_time,
-                        "event_success_time": event_success_time,
-                        **row, 
+                        "event-waiting-time": event_waiting_time,
+                        "event-processing-time": event_processing_time,
+                        "event-total-time": event_total_time,
+                        **row
                     }
+
                     writer.writerow({k: v for k, v in new_row.items() if k in headers})
                     del grouper[row["uid"]]
 
