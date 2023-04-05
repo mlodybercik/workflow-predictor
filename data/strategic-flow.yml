@@ -1,0 +1,243 @@
+workflows:
+  - name: strategic-flow
+    app: harmonica
+    instanceKeyParams: [business-date, hac-run-id, batch-workflow, batch-instance-seq]
+    jobs:
+
+      - job:
+          name: f1-notification-trigger
+
+      - job:
+          name: open-date-card
+          precondition: [f1-notification-trigger]
+          ctxParamPreconditions:
+            scenario-workflow: equalsOrEmpty:strategic-batch
+          options:
+            ctx-params-mismatch-handling: break-flow
+
+      - job:
+          name: init-strategic-batch
+          precondition: [open-date-card]
+
+      - job:
+          name: start-strategic-batch
+          precondition: [init-strategic-batch]
+
+      - job:
+          name: land-f1ref-data
+          precondition: [start-strategic-batch]
+          ctxParamPreconditions:
+            skip-mdl-landing: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: land-f1mdl-data
+          precondition: [start-strategic-batch]
+          ctxParamPreconditions:
+            skip-mdl-landing: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: reload-f1mdl-landing-tables
+          precondition: [land-f1mdl-data]
+          ctxParamPreconditions:
+            skip-mdl-landing: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: reload-f1ref-landing-tables
+          precondition: [land-f1ref-data]
+          ctxParamPreconditions:
+            skip-mdl-landing: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: run-data-staging
+          precondition: [land-f1mdl-data, land-f1ref-data]
+          ctxParamPreconditions:
+            skip-mdl-landing: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: reload-staging-tables
+          precondition: [run-data-staging]
+          ctxParamPreconditions:
+            skip-mdl-landing: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: run-data-harmonization
+          precondition: [run-data-staging]
+
+      - job:
+          name: reload-harmonized-reference-tables
+          precondition: [run-data-harmonization]
+
+      - job:
+          name: reload-product-audit
+          precondition: [run-data-harmonization]
+
+      - job:
+          name: reload-harmonized-non-reference-tables
+          precondition: [reload-harmonized-reference-tables]
+
+      - job:
+          name: complete-strategic-harmonization-job
+          precondition: [run-data-harmonization]
+
+      - job:
+          name: run-b3-calculation
+          precondition: [complete-strategic-harmonization-job]
+
+      - nop:
+          name: b3-calc-completed
+          precondition: [run-b3-calculation, reload-harmonized-reference-tables]
+
+      - job:
+          name: run-b3std-calculation
+          precondition: [run-b3-calculation]
+
+      - job:
+          name: run-b3ler-calculation
+          precondition: [run-b3-calculation]
+          ctxParamPreconditions:
+            skip-ler: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: run-b3lech-calculation
+          precondition: [run-b3-calculation]
+          ctxParamPreconditions:
+            batch-workflow: matches:(STRATEGIC_EUR|STRATEGIC_AMS|STRATEGIC_CH)
+
+      - job:
+          name: run-b3lvr-calculation
+          precondition: [run-b3-calculation]
+          ctxParamPreconditions:
+            source-type: matches:.*PB.*
+
+      - job:
+          name: strategic-calc-completed
+          precondition: [ run-b3ler-calculation, run-b3lech-calculation, run-b3std-calculation ]
+
+      - job:
+          name: mdl-out-b3
+          precondition: [b3-calc-completed]
+          ctxParamPreconditions:
+            skip-mdl-out: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - nop:
+          name: complete-b3-strategic-batch
+          precondition: [mdl-out-b3]
+          ctxParamPreconditions:
+            skip-mdl-out: empty
+
+      - job:
+          name: mdl-out-ler
+          precondition: [run-b3ler-calculation]
+          ctxParamPreconditions:
+            skip-mdl-out: equalsOrEmpty:false
+            skip-ler: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: mdl-out-b3std
+          precondition: [run-b3std-calculation]
+          ctxParamPreconditions:
+            skip-mdl-out: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: mdl-out-lech
+          precondition: [run-b3lech-calculation]
+          ctxParamPreconditions:
+            batch-workflow: matches:(STRATEGIC_EUR|STRATEGIC_AMS|STRATEGIC_CH)
+            skip-mdl-out: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: mdl-out-lvr
+          precondition: [run-b3lvr-calculation]
+          ctxParamPreconditions:
+            source-type: matches:.*PB.*
+            skip-mdl-out: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: continue-flow
+
+      - job:
+          name: reload-b3-tables
+          precondition: [b3-calc-completed]
+
+      - job:
+          name: reload-b3std-tables
+          precondition: [run-b3std-calculation]
+
+      - job:
+          name: reload-b3ler-tables
+          precondition: [run-b3ler-calculation]
+          ctxParamPreconditions:
+            skip-ler: equalsOrEmpty:false
+          options:
+            ctx-params-mismatch-handling: break-flow
+
+      - job:
+          name: reload-b3lech-tables
+          precondition: [run-b3lech-calculation]
+          ctxParamPreconditions:
+            batch-workflow: matches:(STRATEGIC_EUR|STRATEGIC_AMS|STRATEGIC_CH)
+
+      - job:
+          name: run-collateral-utilization
+          precondition: [ run-b3-calculation, run-b3ler-calculation, run-b3std-calculation, run-b3lech-calculation ]
+
+      - job:
+          name: reload-collateral-utilization
+          precondition: [run-collateral-utilization]
+
+      - job:
+          name: reload-b3-audit
+          precondition: [reload-b3-tables]
+
+      - job:
+          name: reload-b3std-audit
+          precondition: [reload-b3std-tables, reload-b3-audit]
+
+      - job:
+          name: reload-b3ler-audit
+          precondition: [reload-b3ler-tables, reload-b3std-audit]
+
+      - job:
+          name: reload-b3lech-audit
+          precondition: [reload-b3lech-tables, reload-b3ler-audit]
+          ctxParamPreconditions:
+            batch-workflow: matches:(STRATEGIC_EUR|STRATEGIC_AMS|STRATEGIC_CH)
+
+      - job:
+          name: reload-b3lvr-tables
+          precondition: [run-b3lvr-calculation]
+          ctxParamPreconditions:
+            source-type: matches:.*PB.*
+
+      - job:
+          name: reload-b3lvr-audit
+          precondition: [ reload-b3lvr-tables ]
+          ctxParamPreconditions:
+            source-type: matches:.*PB.*
+
+      - job:
+          name: complete-strategic-batch
+          precondition: [mdl-out-b3, mdl-out-ler, mdl-out-b3std, mdl-out-lech]
+          ctxParamPreconditions:
+            skip-mdl-out: empty
