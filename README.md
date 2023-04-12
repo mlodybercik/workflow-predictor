@@ -24,6 +24,12 @@ STRATEGIC|2022-07-30 05:08:24.0||PROCESSING|STRATEGIC_PAC|2022-07-30_03.08.13|||
 STRATEGIC|2022-07-30 05:08:24.0||SUCCESS|STRATEGIC_PAC|2022-07-30_03.08.13|||1be997ff0fa411ed9efe4be67384bf3f|2022-07-29||2022-07-29|BD0|PAC|strategic-flow|f1-notification-trigger||||2022-07-29|2022-07-30 05:08:24.0
 STRATEGIC|2022-07-30 05:08:24.0||SUBMITTED|STRATEGIC_PAC|2022-07-30_03.08.13|||1bf0c3f00fa411ed9efe75307937e094|2022-07-29|1be997ff0fa411ed9efe4be67384bf3f|2022-07-29|BD0|PAC|strategic-flow|open-date-card||||2022-07-29|2022-07-30 05:08:24.0
 
+### Zły YAML
+Zacznę od tego, że YAML'e które dostaliśmy były błędnie zapisane, osoba która je tworzyła nie sprawdziła potem czy się w ogóle otworzy. Linijki z niego były usuwane z palca, nie skryptem, bo w jednym miejscu ktoś usunął deklaracje słownika. Dalej kwestia cudzysłowiów, wszystkie biblioteki (YAML'owe) które przetestowałem, nie radzą sobię z tym, że w niektórych linijkach pojawia się dwa razy dwukropek, bez żadnego cudzysłowia.
+
+### CSV
+W pliku csv, `workflow_name` nie wskazuje jednoznacznie na workflow z którego trzeba korzystać. Unikatowych tasków jest 61, w `securitization-flow.yml` jest 28 zadań, w `strategic-flow.yml` w 41 (`69 != 61`). Czym jest `parent_id` skoro istnieje grupka eventów gdzie cały graf zaczyna się wykonywać w środku?
+
 ## Źródła
 (prawdopodobnie bedziecie potrzebowali proxy uczelnianego)
 

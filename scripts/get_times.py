@@ -4,7 +4,6 @@ from datetime import datetime
 STATES = {"PROCESSING", "SUCCESS", "SUBMITTED"}
 
 # im gonna create three columns:
-# and 
 # time from submitted to processing in event_time -> event-waiting-time
 # time from processing to successs  in event_time -> event-processing-time
 # time from submitted to successs   in event_time -> event-total-time

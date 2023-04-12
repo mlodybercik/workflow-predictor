@@ -1,4 +1,6 @@
 import csv
+from collections import defaultdict
+import yaml
 import shlex
 
 # params looks like this:
@@ -19,6 +21,8 @@ all_commands = {
     'processing-location-is-eur', 'processing-location-is-pac', 'processing-location-is-sec',
     'source-type-is-ib', 'source-type-is-pb',
 }
+
+columns_per_task = defaultdict(set)
 
 # which rows to delete?
 failed = lambda row: not bool(row['failed-job-id'])
@@ -43,7 +47,11 @@ with open('data/maestro-history-clean.csv', 'w') as file_w:
 
             # group params in pairs to extract them into columns
             for item in iterator:
-                parsed_params[item[2:]] = next(iterator)
+                parameter = item.removeprefix("--")
+                parsed_params[parameter] = next(iterator)
+
+                # get list of parameters used for any task
+                columns_per_task[line["job_name"]].add(parameter)
 
             if (loc := parsed_params['processing-location']):
                 for name in loc.split(","):
@@ -53,8 +61,12 @@ with open('data/maestro-history-clean.csv', 'w') as file_w:
                 for name in source_type.split(","):
                     parsed_params[f'source-type-is-{name.lower()}'] = 1
 
+
             new_row = {**line, **parsed_params}
 
             # if any of the to_remove macros return true, skip that line
             if any([i(new_row) for i in to_remove]):
                 writer.writerow({k: v for k, v in new_row.items() if k in header})
+
+with open("data/task-columns.yml", "w") as file:
+    file.write(yaml.dump({key: list(columns) for key, columns in columns_per_task.items()}, Dumper=yaml.CDumper))
