@@ -31,7 +31,7 @@ class Job:
 
     previous_ratio: float = 1.0
 
-    __hash__ = lambda self: hash(self.uid)
+    __hash__ = lambda self: hash(self.uid.lower())
     __repr__ = lambda self: f"<{self.__class__.__name__} uid='{self.uid}' p_uid='{self.parent_uid}' time='{self.time}' name='{self.name}'>"
 
     @property
@@ -79,8 +79,8 @@ def main(graph: nx.DiGraph, name: str):
         headers = tuple(reader.fieldnames)
 
         for line in reader:
-            if not (line["job_name"] in graph.nodes):
-                continue
+            # if not (line["job_name"] in graph.nodes):
+            #     continue
 
             job = Job.from_entry(line)
             ALL_JOBS[job.uid] = job
@@ -95,6 +95,8 @@ def main(graph: nx.DiGraph, name: str):
 
         MEAN_TIMES[job_name] = times[(times >= low_quantile) & (times <= high_quantile)].mean()
 
+    
+
     for job_name in JOBS_TYPES.keys():
         for job in JOBS_TYPES[job_name].values():
             if not job.parent_uid:
@@ -104,7 +106,28 @@ def main(graph: nx.DiGraph, name: str):
                 if MEAN_TIMES[parent.name] >= 1:
                     job.previous_ratio = float(parent.time / MEAN_TIMES[parent.name])
             except KeyError:
-                continue
+                pass
+
+    parentless = defaultdict(int)
+    parentmissing = defaultdict(int)
+
+    # for job_name in JOBS_TYPES.keys():
+    for job in JOBS_TYPES["complete-securitization-batch"].values():
+        if not job.parent_uid:
+            parentless[job.name] += 1
+            continue
+        try:
+            while job.parent_uid:
+                job = ALL_JOBS[job.parent_uid]
+            parentless[job.name] += 1
+        except KeyError:
+            parentmissing[job.name] += 1
+
+    print("Parentless:", parentless)
+    print()
+    print("Parent missing:", parentmissing)
+    
+                
 
     with open(f"data/maestro-calculated-{name}.csv", "w") as file:
         writer = csv.DictWriter(file, headers + ("previous-ratio",), lineterminator="\n")
