@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: '.'
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+    ports:
+      - '5000:5000'
+
+  nginx:
+    build: './nginx'
+    ports:
+      - '1337:80'
+    depends_on:
+      - app

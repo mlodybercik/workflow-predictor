@@ -1,6 +1,19 @@
 # workflow-predictor
 Zespołowe Przedsięwzięcie Inżynierskie, projekt dla Credit Suisse
 
+## Pisanie kodu u siebie
+Najsampierw będziemy potrzebowali `pipenv`, dalej potrzebujemy zsynchronizować paczki żeby klepać w tym samym środowisku. U siebie korzystam z pythona 3.9, więc wy też musicie (w 3.8 weszło `:=` a w 3.9 `str.removesuffix/prefix`). Jak zainstalujecie paczki (te deweloperskie też), to musicie odpalić to środowisko. W tym środowisku dalej musicie zainstalować hooki `pre-commit`'a (zanim coś wsadzicie do commita, bedzie musiało przejść jakieś testy żeby ten kod przynajmniej jakoś wyglądał). W tym momencie możecie pracować. Jak będziecie coś dodawali to `git commit ...` będzie wykonywało te testy.
+```bash
+python3 -m pip install pipenv
+pipenv install --dev
+pipenv shell
+pre-commit install
+```
+Uruchamianie kodu to:
+- jeśli masz Dockera zainstalowanego to `docker compose build`, `docker compose up`,
+- jeśli nie, to serwer odpalasz `python src/app.py`.
+Oba podejścia dają praktycznie to samo, ale Docker daje środowisko produkcyjne. W obu przypadkach aplikacja będzie dostępna pod: `http://localhost:5000` (albo innym jak stawiasz na jakimś remote serwerze).
+
 ## Dane
 Do pracy wrzućcie sobie dane do folderu `data/`, wyłączyłem w gitignore ten duży plik co dostaliśmy od Grzesia żeby go w tej formie nie trzymać.
 W rubryce params znajdują się następujące parametry:

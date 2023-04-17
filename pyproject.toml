@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 120
+
+[tool.flake8]
+extend-ignore = "E203"
+max-line-length = 120
+exclude = "scripts/,temp/"
+
+[tool.isort]
+profile = "black"
