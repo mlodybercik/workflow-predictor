@@ -7,12 +7,16 @@ from pathlib import Path
 from flask import Flask
 
 from . import workflow
+from .predictor import Predictor
 
 logger: logging.Logger = None
 
 
 LOGGING_CONFIG_LOCATION = os.environ.get("LOGGING_CONFIG_LOCATION", False)
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL", "DEBUG").upper()
+
+GRAPH_DEFINITIONS_LOCATION = os.environ.get("GRAPH_DEFINITIONS_LOCATION", "/tmp/workflows/")
+MODEL_DEFINITIONS_LOCATION = os.environ.get("MODEL_DEFINITIONS_LOCATION", "/tmp/")
 
 
 def init_logger() -> logging.Logger:
@@ -41,5 +45,12 @@ def get_app() -> Flask:
 
     for blueprint in [workflow.predictor]:
         app.register_blueprint(blueprint)
+
+    graph_location = Path(GRAPH_DEFINITIONS_LOCATION)
+    model_location = Path(MODEL_DEFINITIONS_LOCATION)
+
+    predictor = Predictor(model_location, graph_location)
+
+    predictor.test()
 
     return app
