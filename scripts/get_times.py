@@ -24,7 +24,7 @@ with open("data/maestro-calculated.csv", "w") as file_w:
             "event-total-time", *reader.fieldnames
         }
 
-        [headers.remove(i) for i in ["status", "event_time", "cmd_time"]]
+        [headers.remove(i) for i in ["status", "cmd_time"]]
         writer = csv.DictWriter(file_w, headers, lineterminator="\n")
         writer.writeheader()
 
