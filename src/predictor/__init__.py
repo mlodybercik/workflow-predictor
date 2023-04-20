@@ -16,7 +16,7 @@ LOGGING_CONFIG_LOCATION = os.environ.get("LOGGING_CONFIG_LOCATION", False)
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL", "DEBUG").upper()
 
 GRAPH_DEFINITIONS_LOCATION = os.environ.get("GRAPH_DEFINITIONS_LOCATION", "/tmp/workflows/")
-MODEL_DEFINITIONS_LOCATION = os.environ.get("MODEL_DEFINITIONS_LOCATION", "/tmp/")
+MODEL_DEFINITIONS_LOCATION = os.environ.get("MODEL_DEFINITIONS_LOCATION", "/tmp/models/")
 
 
 def init_logger() -> logging.Logger:
@@ -50,6 +50,7 @@ def get_app() -> Flask:
     model_location = Path(MODEL_DEFINITIONS_LOCATION)
 
     predictor = Predictor(model_location, graph_location)
+    app.predictor = predictor
 
     predictor.test()
 

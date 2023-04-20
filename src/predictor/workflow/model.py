@@ -32,10 +32,11 @@ class ModelBank:
         try:
             return self.bank[key]
         except KeyError:
-            logger.exception(f"Model missing for key '{key}'")
+            logger.warning(f"Model missing for key '{key}'")
             # FIXME: remove this return default missing model
             # TODO: we could change this default into some kind of a lazyloader
-            return BlankModel(1)
+            self.bank[key] = (model := BlankModel(key, 1))
+            return model
 
     def load(self, name: str) -> "Model":
         logger.debug(f"FIXME: Attempting to load '{name}'")
@@ -44,5 +45,4 @@ class ModelBank:
         return model
 
     def load_all(self):
-        logger.info("Attempting to load all")
         self.bank.update(self.loader.load_all())

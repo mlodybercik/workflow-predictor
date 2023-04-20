@@ -1,3 +1,4 @@
+from json import load as json_load
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict
 
@@ -28,7 +29,7 @@ class WorkflowLoader(Loader):
 
     def load(self, file_path: Path) -> "Workflow":
         flow_name = file_path.name.removesuffix(".yml")
-        # logger.info(f"Loading {flow_name}")
+        logger.info(f"Loading {flow_name}")
         with open(file_path) as file:
             workflow_dict = yaml_load(file, CLoader)
 
@@ -49,10 +50,12 @@ class WorkflowLoader(Loader):
                 for precondition in job.get("precondition", []):
                     nodes.add(precondition)
                     connections.append((precondition, name))
+            else:
+                logger.debug("job_dict yielded unknown job type")
         return Workflow(flow_name, nodes, connections, self.model_bank)
 
     def load_all(self) -> Dict[str, "Workflow"]:
-        logger.debug("Attempting to load all...")
+        logger.debug("Attempting to load all workflows")
         ret = dict()
         for file_path in self.filter_files(list_dir(self.location)):
             flow_name = file_path.name.removesuffix(".yml")
@@ -62,10 +65,19 @@ class WorkflowLoader(Loader):
 
 class ModelLoader(Loader):
     def load(self, name: str):
+        logger.debug("Attempting to load single model is not supported right now.")
         return BlankModel(name, 1)
 
     def filter_file(self, file):
         return True
 
     def load_all(self) -> Dict[str, "Model"]:
-        return super().load_all()
+        logger.debug("Attempting to load all models")
+        # TODO: this is temporary until we create some kind of model export system.
+        ret = dict()
+        with open(self.location / "means.json") as file:
+            models = json_load(file)
+
+        for name, mean in models.items():
+            ret[name] = BlankModel(name, mean)
+        return ret

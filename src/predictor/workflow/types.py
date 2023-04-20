@@ -1,4 +1,4 @@
-from abc import ABC, abstractstaticmethod
+from abc import ABC, abstractmethod, abstractstaticmethod
 from enum import Enum, auto
 from pathlib import Path
 from typing import Dict, List
@@ -28,15 +28,11 @@ class Loader(ABC):
     def filter_file(path: Path) -> bool:
         ...
 
-    # @abstractmethod
-    def read_file(self, path: Path) -> str:
-        ...
-
-    # @abstractmethod
+    @abstractmethod
     def load_all(self) -> Dict[str, "Model"]:
         ...
 
-    # @abstractmethod
+    @abstractmethod
     def load(self, name: str):
         ...
 

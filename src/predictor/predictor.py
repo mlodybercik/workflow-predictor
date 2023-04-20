@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict
 
@@ -28,9 +29,18 @@ class Predictor:
 
         self.model_loader = ModelLoader(model_path)
         self.model_bank = ModelBank(self.model_loader)
+
+        self.model_bank.load_all()
+
         self.workflow_loader = WorkflowLoader(workflow_path, self.model_bank)
 
         self.workflows.update(self.workflow_loader.load_all())
 
     def test(self):
-        print(self.workflows["securitization-flow"].predict("reload-tactical-tables-post-securitization", {}, {}))
+        print(
+            self.workflows["securitization-flow"].predict(
+                "reload-tactical-tables-post-securitization",
+                {"complete-strategic-batch": datetime.now() - timedelta(seconds=30)},
+                {"skip-regional-batches": datetime.now() - timedelta(seconds=21.37)},
+            )
+        )
