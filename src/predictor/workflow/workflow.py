@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum, auto
+from enum import Enum
 from typing import TYPE_CHECKING, Dict, Optional, Sequence, Tuple
 
 import networkx as nx
@@ -16,9 +16,9 @@ logger = logger.getChild("workflow")
 
 
 class CurrentNodeStatus(Enum):
-    WAITING = auto()
-    PROCESSING = auto()
-    DONE = auto()
+    WAITING = "waiting"
+    PROCESSING = "processing"
+    DONE = "done"
 
 
 @dataclass
@@ -35,6 +35,10 @@ class NodeStatus:
     @classmethod
     def from_running(cls, started: datetime):
         return cls(started=started, status=CurrentNodeStatus.PROCESSING)
+
+    def data(self):
+        if self.started:
+            return
 
 
 class Workflow:
@@ -105,22 +109,31 @@ class Workflow:
 
         now = datetime.now()
 
-        for target in all_nodes:
-            if node_status[target].status == CurrentNodeStatus.DONE:
-                node_status[target].time = 0
+        for node in all_nodes:
+            if node_status[node].status == CurrentNodeStatus.DONE:
+                node_status[node].time = 0
 
-            elif node_status[target].status == CurrentNodeStatus.PROCESSING:
-                duration = (now - node_status[target].started).total_seconds()
-                prediction = self.bank[target].predict()
+            elif node_status[node].status == CurrentNodeStatus.PROCESSING:
+                duration = (now - node_status[node].started).total_seconds()
+                prediction = self.bank[node].predict()
                 duration_left = prediction - duration
                 if duration_left < 0:
-                    logger.info(f"Node '{target}' exceded predicted time of {duration:.2f} by {-duration_left:.2f}!")
+                    logger.info(f"Node '{node}' exceded predicted time of {duration:.2f} by {-duration_left:.2f}!")
                     duration_left = 0
 
-                node_status[target].time = duration_left
+                node_status[node].time = duration_left
 
             else:
-                node_status[target].time = self.bank[target].predict()
+                for requirement in self.graph.predecessors(node):
+                    if node_status[requirement].status != CurrentNodeStatus.WAITING:
+                        logger.info(f"Node '{node}' waiting on '{requirement}'")
+                node_status[node].time = self.bank[node].predict()
 
-        return max([sum([node_status[j].time for j in i]) for i in all_paths])
+        longest_path = 0
+        path_lengths = [sum([node_status[j].time for j in i]) for i in all_paths]
+        for i, path in enumerate(path_lengths):
+            if path > path_lengths[i]:
+                longest_path = i
+
         # return {i: sum([node_status[j].time for j in k]) for (i, k) in enumerate(all_paths)}
+        return all_paths[longest_path], path_lengths[longest_path]

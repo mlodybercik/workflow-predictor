@@ -12,7 +12,7 @@ from typing import Optional, Dict, Union, Set, Any, DefaultDict
 
 # why colon is not in quote in yaml wtf
 PATTERN = re.compile(r"^(\s+[\w-]+: )(.*:.*)$", re.MULTILINE)
-METRIC = "event-processing-time"
+METRIC = "processing-time"
 LOW_QUANTILE = 0.05
 HIGH_QUANTILE = 1 - LOW_QUANTILE
 
