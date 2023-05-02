@@ -92,4 +92,5 @@ with open('data/maestro-history-clean.csv', 'w') as file_w:
     file_2.close()
 
 with open("data/task-columns.yml", "w") as file:
-    file.write(yaml.dump({key: list(columns) for key, columns in columns_per_task.items()}, Dumper=yaml.CDumper))
+    sorted_columns = sorted(columns_per_task.items(), key=lambda a: a[0])
+    file.write(yaml.dump({key: sorted(row) for key, row in sorted_columns}, Dumper=yaml.CDumper))
