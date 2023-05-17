@@ -12,17 +12,6 @@ import shlex
 # 
 # https://docs.python.org/3/library/shlex.html#shlex.split
 
-all_commands = {
-    'processing-location', 'bsinp-run-id', 'api-version', 'correlation-id', 'flow-type',
-    'batch-workflow', 'rd-run-id', 'batch-instance-seq', 'chf-usd-rate', 'skip-mdl-out',
-    'pb-run-id', 'setenv', 'regulatory-approaches', 'business-date', 'skip-mdl-landing',
-    'ib-run-id', 'as-of-date', 'failed-job-status', 'as-of-datetime', 'failed-job-uid',
-    'source-type', 'rules-branch', 'failed-job-id', 'scenario-workflow', 'process-flag',
-    'hac-run-id', 'business-day', 'processing-location-is-ams', 'processing-location-is-ch', 
-    'processing-location-is-eur', 'processing-location-is-pac', 'processing-location-is-sec',
-    'source-type-is-ib', 'source-type-is-pb',
-}
-
 columns_per_task = defaultdict(set)
 
 # which rows to delete?
@@ -30,8 +19,10 @@ failed = lambda row: not bool(row['failed-job-id'])
 to_remove = [failed]
 
 # which columns to remove?
-columns_to_remove = {'params', 'processing-location', 'failed-job-id', 'failed-job-uid', 'source-type'}
+columns_to_remove = {'params', 'failed-job-id', 'failed-job-uid'}
+all_commands = set()
 
+# TODO: use multithreading
 with open('data/maestro-history-clean.csv', 'w') as file_w:
     # open both files
     file_1 = open('data/maestro-history.csv', 'r')
@@ -49,6 +40,30 @@ with open('data/maestro-history-clean.csv', 'w') as file_w:
     next(file_2)
 
     reader = csv.DictReader(chain(file_1, file_2), lineterminator='\n')
+    # we need to get all the new columns from files
+    for i, line in enumerate(reader):
+        if not (i % 1000):
+            print(f"[1/2]{i: 6d}/{length: 6d}", end="\r")
+
+        params = line.pop('params')
+        iterator = iter(shlex.split(params))
+        for item in iterator:
+            next(iterator)
+            parameter = item.removeprefix("--")
+            all_commands.add(parameter)
+
+            # as we do it twice anyways, we could do it here...
+            # get list of parameters used for any task
+            columns_per_task[line["job_name"]].add(parameter)
+
+    file_1.seek(0)
+    file_2.seek(0)
+
+    next(file_2)
+
+    # just to be sure we recreate the new reader
+    reader = csv.DictReader(chain(file_1, file_2), lineterminator='\n')
+
     header = set([*next(reader), *all_commands])
     header.difference_update(columns_to_remove)
 
@@ -57,20 +72,16 @@ with open('data/maestro-history-clean.csv', 'w') as file_w:
 
     for i, line in enumerate(reader):
         if not (i % 1000):
-            print(f"{i: 6d}/{length: 6d}", end="\r")
+            print(f"[2/2]{i: 6d}/{length: 6d}", end="\r")
 
         params = line.pop('params')
         iterator = iter(shlex.split(params))
         parsed_params = dict.fromkeys(all_commands, '')
 
-
         # group params in pairs to extract them into columns
         for item in iterator:
             parameter = item.removeprefix("--")
             parsed_params[parameter] = next(iterator)
-
-            # get list of parameters used for any task
-            columns_per_task[line["job_name"]].add(parameter)
 
         if (loc := parsed_params['processing-location']):
             for name in loc.split(","):

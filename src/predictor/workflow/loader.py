@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 from . import logger
 
+logger = logger.getChild("loader")
+
 
 class WorkflowLoader(Loader):
     model_bank: "ModelBank"
@@ -65,7 +67,7 @@ class WorkflowLoader(Loader):
 
 class ModelLoader(Loader):
     def load(self, name: str):
-        logger.debug("Attempting to load single model is not supported right now.")
+        logger.warning("Attempting to load single model is not supported right now.")
         return BlankModel(name, 1)
 
     def filter_file(self, file):

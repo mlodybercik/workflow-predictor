@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict
 
+from flask import Flask
+
 from .workflow.loader import ModelLoader, WorkflowLoader
 from .workflow.model import ModelBank
 from .workflow.workflow import Workflow
@@ -35,6 +37,10 @@ class Predictor:
         self.workflow_loader = WorkflowLoader(workflow_path, self.model_bank)
 
         self.workflows.update(self.workflow_loader.load_all())
+
+    def load_blueprints(self, app: Flask):
+        for blueprint in []:
+            app.register_blueprint(blueprint)
 
     def test(self):
         print(

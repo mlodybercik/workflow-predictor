@@ -36,10 +36,6 @@ class NodeStatus:
     def from_running(cls, started: datetime):
         return cls(started=started, status=CurrentNodeStatus.PROCESSING)
 
-    def data(self):
-        if self.started:
-            return
-
 
 class Workflow:
     name: str
@@ -73,7 +69,9 @@ class Workflow:
                 paths.append([target] + v_path)
         return paths
 
-    def predict(self, target: str, finished: Dict[str, datetime], running: Dict[str, datetime]) -> float:
+    def predict(
+        self, target: str, finished: Dict[str, datetime], running: Dict[str, datetime], now: Optional[datetime] = None
+    ) -> float:
         if target not in self.nodes:
             logger.critical(f"Target node '{target}' not found in {self.name} workflow!")
             raise KeyError(f"{target} not found in graph")
@@ -107,7 +105,8 @@ class Workflow:
         for path in all_paths:
             all_nodes.update(path)
 
-        now = datetime.now()
+        if not now:
+            now = datetime.now()
 
         for node in all_nodes:
             if node_status[node].status == CurrentNodeStatus.DONE:
@@ -126,7 +125,7 @@ class Workflow:
             else:
                 for requirement in self.graph.predecessors(node):
                     if node_status[requirement].status != CurrentNodeStatus.WAITING:
-                        logger.info(f"Node '{node}' waiting on '{requirement}'")
+                        logger.debug(f"Node '{node}' waiting on '{requirement}'")
                 node_status[node].time = self.bank[node].predict()
 
         longest_path = 0

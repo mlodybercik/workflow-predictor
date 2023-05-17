@@ -6,7 +6,6 @@ from pathlib import Path
 
 from flask import Flask
 
-from . import workflow
 from .predictor import Predictor
 
 logger: logging.Logger = None
@@ -34,22 +33,16 @@ def init_logger() -> logging.Logger:
     return logger
 
 
-def hello():
-    return "hello world", 200
-
-
 def get_app() -> Flask:
     init_logger()
     logger.info("Creating app...")
     app = Flask(__name__)
 
-    for blueprint in [workflow.predictor]:
-        app.register_blueprint(blueprint)
-
     graph_location = Path(GRAPH_DEFINITIONS_LOCATION)
     model_location = Path(MODEL_DEFINITIONS_LOCATION)
 
     predictor = Predictor(model_location, graph_location)
+    predictor.load_blueprints(app)
     app.predictor = predictor
 
     predictor.test()
