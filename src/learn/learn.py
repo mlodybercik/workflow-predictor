@@ -8,10 +8,13 @@ from sklearn.model_selection import (
 )
 from yaml import CLoader, load
 
+from learn.time_preprocess_mapping import TIME_MAPPING
 from predictor.preprocess.mapping import MAPPING
+from serialize.model import ModelSerializer
 
 from . import logger
 from .data_generator import DictDataGenerator
+from .stats_callback import InMemoryCSVLogger
 from .tf_model import create_model_from_params
 
 logger = logger.getChild("learn")
@@ -47,28 +50,35 @@ class ModelLearn:
             self.task_columns = load(file, CLoader)
 
         self.data = pd.read_csv(self.maestro_calculated, low_memory=False)
-        self.preprocess_time()
 
-    def preprocess_time(self):
+    def preprocess_times(self, job_name: str):
+        current_job_times = self.data[self.data["job_name"] == job_name]["processing-time"]
+
+        q05 = float(current_job_times.quantile(0.05))
+        q95 = float(current_job_times.quantile(0.95))
+        min = float(current_job_times.min())
+        max = float(current_job_times.max())
+        mean = float(current_job_times.mean())
+        std = float(current_job_times.std())
+        median = float(current_job_times.median())
+
+        mapping_params = dict(q05=q05, q95=q95, min=min, max=max, mean=mean, std=std, median=median)
+        logger.debug(mapping_params)
+
+        func, inv_func = TIME_MAPPING[job_name]
+
+        self.data.loc[self.data["job_name"] == job_name, "processing-time"] = func(current_job_times, mapping_params)
+        return inv_func, mapping_params
+
+    def learn(self, split_dataset=True, split_ratio=0.8, batch_size=2, epochs=20):
         for job in self.data["job_name"].unique():
-            current_job_times = self.data[self.data["job_name"] == job]["processing-time"]
+            logger.info(f"Starting {job}")
 
-            mean = current_job_times.mean()
-            std = current_job_times.std()
-            median = current_job_times.median()
+            inv_func, mapping_params = self.preprocess_times(job)
 
-            if mean > 0:
-                self.data.loc[self.data["job_name"] == job, "processing-time"] = (current_job_times - median) / std
-            else:
-                self.data.loc[self.data["job_name"] == job, "processing-time"] = current_job_times - median
-
-    def learn(self, split_dataset=True, split_ratio=0.8, batch_size=2):
-        jobs = self.data["job_name"].unique()
-
-        for job in jobs:
-            print(f"Starging {job}")
             job_train = self.data[self.data["job_name"] == job]
-            # for production, we should train model on all of the
+
+            # for production, we should train model on all of the data
             if split_dataset:
                 job_train, job_test = train_test_split(job_train, test_size=1 - split_ratio)
 
@@ -77,26 +87,28 @@ class ModelLearn:
             for parameter in self.task_columns[job]:
                 parameters.update(MAPPING[parameter](parameter, job_train.iloc[0][parameter]))
 
-            model = create_model_from_params(parameters.keys())
-
-            # we specify the output types for tf to use
-            output_type = {k: (tf.float32) for k in parameters.keys()}, tf.float32
+            # we get the model, and input/output signature
+            # TODO: create models from some kind of override file
+            model, signature = create_model_from_params(parameters.keys())
 
             # we create the dataset
             DATASET = tf.data.Dataset.from_generator(
-                DictDataGenerator(job_train, self.task_columns[job], 1), output_types=output_type
+                DictDataGenerator(job_train, self.task_columns[job], 1), output_types=signature
             )
 
             # and do the usual
             model.compile(
-                optimizer=tf.keras.optimizers.SGD(learning_rate=0.0001, momentum=True),
+                optimizer=tf.keras.optimizers.SGD(learning_rate=0.00005, momentum=True),
                 loss="mse",
             )
-
-            model.fit(DATASET, epochs=10, batch_size=batch_size)
+            csv_logger = InMemoryCSVLogger()
+            model.fit(DATASET, epochs=epochs, batch_size=batch_size, verbose=False, callbacks=[csv_logger])
 
             if split_dataset:
                 DATASET_VAL = tf.data.Dataset.from_generator(
-                    DictDataGenerator(job_test, self.task_columns[job], 1), output_types=output_type
+                    DictDataGenerator(job_test, self.task_columns[job], 1), output_types=signature
                 )
-                print(f"{job}'s loss = {model.evaluate(DATASET_VAL)}")
+                logger.info(f"{job}'s loss = {model.evaluate(DATASET_VAL, verbose=False)}")
+
+            with ModelSerializer(f"/tmp/models/{job}.wfp", "w") as serializer:
+                serializer.save_model_to_zip(model, inv_func, mapping_params, csv_logger.csv_file.getvalue())

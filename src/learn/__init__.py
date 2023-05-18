@@ -1,7 +1,7 @@
 # isort: skip_file
-import logging
+from predictor import init_logger
 
-logger = logging.getLogger(__name__).getChild("learn")
+logger = init_logger("INFO")
 
 from .learn import ModelLearn  # noqa: E402
 

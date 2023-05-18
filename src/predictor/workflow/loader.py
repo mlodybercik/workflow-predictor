@@ -1,19 +1,16 @@
-from json import load as json_load
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict
+from typing import Dict
 
 from yaml import CLoader
 from yaml import load as yaml_load
 
-from .model import BlankModel
+from serialize.model import ModelSerializer
+
+from . import logger
+from .model import ModelBank, TFModel
 from .types import Loader
 from .utils import list_dir
 from .workflow import Workflow
-
-if TYPE_CHECKING:
-    from .model import ModelBank, Model
-
-from . import logger
 
 logger = logger.getChild("loader")
 
@@ -67,19 +64,18 @@ class WorkflowLoader(Loader):
 
 class ModelLoader(Loader):
     def load(self, name: str):
-        logger.warning("Attempting to load single model is not supported right now.")
-        return BlankModel(name, 1)
+        with ModelSerializer(self.location / f"{name}.wfp", "r") as archive:
+            model, meta, inv_func = archive.load_model_from_zip()
+        return TFModel(meta, model, inv_func)
 
-    def filter_file(self, file):
-        return True
+    @staticmethod
+    def filter_file(file: Path):
+        return file.name.endswith(".wfp")
 
-    def load_all(self) -> Dict[str, "Model"]:
-        logger.debug("Attempting to load all models")
-        # TODO: this is temporary until we create some kind of model export system.
-        ret = dict()
-        with open(self.location / "means.json") as file:
-            models = json_load(file)
-
-        for name, mean in models.items():
-            ret[name] = BlankModel(name, mean)
+    def load_all(self) -> Dict[str, "TFModel"]:
+        ret = {}
+        for path in self.filter_files(list_dir(self.location)):
+            name = path.name.split(".")[0]
+            model = self.load(name)
+            ret[model.name] = model
         return ret

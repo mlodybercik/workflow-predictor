@@ -1,45 +1,71 @@
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Any, Dict, Set
+
+import numpy as np
 
 from . import logger
-from .types import Model, ModelType
+from .types import ModelABC
 
 if TYPE_CHECKING:
+    import keras as K
+
+    from learn.time_preprocess_mapping import InvTransform
+
     from .loader import ModelLoader
 
 logger = logger.getChild("model")
 
 
-class BlankModel(Model):
-    model_type = ModelType.BLANK
+class TFModel(ModelABC):
+    type = "tensorflow"
+    name: str
+    meta: Dict[str, Any]
+    time_params: Dict[str, float]
+    params: Set[str]
+    model: "K.Model"
+    inv_mapping: "InvTransform"
 
-    def __init__(self, name: str, time: float):
-        self.time = time
-        super().__init__(name)
+    def __init__(self, meta: Dict[str, Any], model: "K.Model", inv_mapping: "InvTransform"):
+        self.meta = meta
+        self.name = meta["name"]
+        self.time_params = meta["mapping_params"]
+        self.params = set(meta["inputs"])
+        self.model = model
+        self.inv_mapping = inv_mapping
 
     def predict(self, /, **kwargs) -> float:
-        return self.time
+        parameters = dict.fromkeys(self.params, "")  # create dictionary from all of the model parameters
+        parameters.update(kwargs)  # join them, to make sure that all parameters that are required exist
+        parameters = {k: np.array([v], dtype=np.float32) for k, v in parameters.items() if k in self.params}
+
+        return self.inv_mapping(self.model.predict(parameters), self.time_params)
+
+
+class BlankModel(ModelABC):
+    type = "blank"
+
+    def __init__(self, name: str):
+        self.name = name
+
+    def predict(self, /, **kwargs) -> float:
+        return 1.0
 
 
 class ModelBank:
     loader: "ModelLoader"
-    bank: Dict[str, "Model"]
+    bank: Dict[str, "TFModel"]
 
     def __init__(self, loader: "ModelLoader"):
         self.bank = {}
         self.loader = loader
 
-    def __getitem__(self, key: str) -> "Model":
+    def __getitem__(self, key: str) -> "TFModel":
         try:
             return self.bank[key]
         except KeyError:
-            logger.warning(f"Model missing for key '{key}'")
-            # FIXME: remove this return default missing model
-            # TODO: we could change this default into some kind of a lazyloader
-            self.bank[key] = (model := BlankModel(key, 1))
-            return model
+            logger.error(f"Requested model {key} doesn't exist! Creating empty model object with 1s time", exc_info=0)
+            self.bank[key] = BlankModel(key)
 
-    def load(self, name: str) -> "Model":
-        logger.debug(f"FIXME: Attempting to load '{name}'")
+    def load(self, name: str) -> "TFModel":
         model = self.loader.load(name)
         self.bank[name] = model
         return model

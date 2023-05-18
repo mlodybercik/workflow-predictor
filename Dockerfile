@@ -14,4 +14,4 @@ WORKDIR /usr/src
 RUN /root/.local/bin/pipenv sync
 
 ADD src ./
-CMD [".venv/bin/python", "-m", "gunicorn", "-b", "0.0.0.0:5000", "-w", "2", "predictor:get_app()"]
+CMD [".venv/bin/python", "-m", "gunicorn", "-b", "0.0.0.0:5000", "-w", "1", "predictor:get_app()"]

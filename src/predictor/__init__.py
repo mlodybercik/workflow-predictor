@@ -18,7 +18,7 @@ GRAPH_DEFINITIONS_LOCATION = os.environ.get("GRAPH_DEFINITIONS_LOCATION", "/tmp/
 MODEL_DEFINITIONS_LOCATION = os.environ.get("MODEL_DEFINITIONS_LOCATION", "/tmp/models/")
 
 
-def init_logger() -> logging.Logger:
+def init_logger(log_level: str) -> logging.Logger:
     global logger
 
     path = Path(LOGGING_CONFIG_LOCATION if LOGGING_CONFIG_LOCATION else __file__).parent.parent / "logging.json"
@@ -29,12 +29,12 @@ def init_logger() -> logging.Logger:
         logging.config.dictConfig(json.loads(file.read()))
     logger = logging.getLogger(__name__)
 
-    logger.setLevel(LOGGING_LEVEL)
+    logger.setLevel(log_level)
     return logger
 
 
 def get_app() -> Flask:
-    init_logger()
+    init_logger(LOGGING_LEVEL)
     logger.info("Creating app...")
     app = Flask(__name__)
 
@@ -44,7 +44,5 @@ def get_app() -> Flask:
     predictor = Predictor(model_location, graph_location)
     predictor.load_blueprints(app)
     app.predictor = predictor
-
-    predictor.test()
 
     return app

@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 from flask import Flask
 
+from .endpoint import WorkflowRequestHandler
 from .workflow.loader import ModelLoader, WorkflowLoader
 from .workflow.model import ModelBank
 from .workflow.workflow import Workflow
@@ -14,6 +14,7 @@ class Predictor:
     model_bank: ModelBank
     workflows: Dict[str, Workflow] = {}
     workflow_loader: WorkflowLoader
+    handlers: List[WorkflowRequestHandler]
 
     def __init__(self, model_directory: str, workflow_directory: str):
         model_path = Path(model_directory).absolute()
@@ -38,15 +39,17 @@ class Predictor:
 
         self.workflows.update(self.workflow_loader.load_all())
 
-    def load_blueprints(self, app: Flask):
-        for blueprint in []:
-            app.register_blueprint(blueprint)
+        self.handlers = [WorkflowRequestHandler(w) for w in self.workflows.values()]
 
-    def test(self):
-        print(
-            self.workflows["securitization-flow"].predict(
-                "reload-tactical-tables-post-securitization",
-                {"complete-strategic-batch": datetime.now() - timedelta(seconds=30)},
-                {"skip-regional-batches": datetime.now() - timedelta(seconds=21.37)},
-            )
-        )
+    def load_blueprints(self, app: Flask):
+        for handler in self.handlers:
+            app.register_blueprint(handler.blueprint)
+
+    # def test(self):
+    #     print(
+    #         self.workflows["securitization-flow"].predict(
+    #             "reload-tactical-tables-post-securitization",
+    #             {"complete-strategic-batch": datetime.now() - timedelta(seconds=30)},
+    #             {"skip-regional-batches": datetime.now() - timedelta(seconds=21.37)},
+    #         )
+    #     )

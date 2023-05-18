@@ -1,13 +1,6 @@
 from abc import ABC, abstractmethod, abstractstaticmethod
-from enum import Enum, auto
 from pathlib import Path
 from typing import Dict, List
-
-
-class ModelType(Enum):
-    BLANK = auto()
-    LINEAR = auto()
-    NEURAL = auto()
 
 
 class Loader(ABC):
@@ -29,7 +22,7 @@ class Loader(ABC):
         ...
 
     @abstractmethod
-    def load_all(self) -> Dict[str, "Model"]:
+    def load_all(self) -> Dict[str, "ModelABC"]:
         ...
 
     @abstractmethod
@@ -37,13 +30,9 @@ class Loader(ABC):
         ...
 
 
-class Model(ABC):
-    model_type: ModelType
-    name: str
+class ModelABC(ABC):
+    type: str
 
-    def __init__(self, name: str):
-        self.name = name
-
-    # @abstractmethod
+    @abstractmethod
     def predict(self, /, **kwargs) -> float:
-        pass
+        ...
