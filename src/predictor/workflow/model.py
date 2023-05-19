@@ -7,7 +7,7 @@ from . import logger
 from .types import ModelABC
 
 if TYPE_CHECKING:
-    from learn.time_preprocess_mapping import InvTransform
+    from learn.model_mapping import InvTransform
 
     from .loader import ModelLoader
 

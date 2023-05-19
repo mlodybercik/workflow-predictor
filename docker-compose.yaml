@@ -6,6 +6,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=INFO
+      - TF_CPP_MIN_LOG_LEVEL=3
     ports:
       - '5000:5000'
 

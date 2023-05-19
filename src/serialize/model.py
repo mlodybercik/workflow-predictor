@@ -13,7 +13,7 @@ import tensorflow as tf
 from . import logger
 
 if TYPE_CHECKING:
-    from learn.time_preprocess_mapping import InvTransform
+    from learn.model_mapping import InvTransform
 
 logger = logger.getChild("model")
 

@@ -23,9 +23,10 @@ class InMemoryCSVLogger(CSVLogger):
             raise ValueError("append not supported")
         self.csv_file = StringIO()
 
-    def on_epoch_begin(self, epoch, logs=None):
-        logger.info(f"Starting epoch {epoch}")
-        return super().on_epoch_begin(epoch, logs)
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        logger.info(f"Epoch {epoch} finished, loss = {logs.get('loss', 'N/A')}")
+        super().on_epoch_end(epoch, logs)
 
     def on_train_end(self, logs=None):
         self.csv_file.seek(0)
