@@ -1,9 +1,9 @@
 # flake8: noqa: F405
-from typing import Callable, Dict
+from typing import Callable, Dict, Union
 
 from .bulk import *  # noqa: F405
 
-MAPPING: Dict[str, Callable[[str, Any], Dict[str, int]]] = {
+MAPPING: Dict[str, Callable[[str, Any], Dict[str, Union[int, str]]]] = {
     "api-version": drop,
     "approach": drop,
     "as-of-date": drop,

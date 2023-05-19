@@ -10,7 +10,6 @@ from .predictor import Predictor
 
 logger: logging.Logger = None
 
-
 LOGGING_CONFIG_LOCATION = os.environ.get("LOGGING_CONFIG_LOCATION", False)
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL", "DEBUG").upper()
 
@@ -44,5 +43,7 @@ def get_app() -> Flask:
     predictor = Predictor(model_location, graph_location)
     predictor.load_blueprints(app)
     app.predictor = predictor
+
+    print(app.url_map)
 
     return app

@@ -23,13 +23,9 @@ class DictDataGenerator:
                 [float(row["processing-time"])], dtype=np.float32
             )
 
-    def __len__(self):
-        return min(len(self.data) // self.batch_size, 1)
-
     def __call__(self):
         return self.__iter__()
 
-    def __init__(self, data: pd.DataFrame, raw_parameters: List[str], batch_size: int = 8):
+    def __init__(self, data: pd.DataFrame, raw_parameters: List[str]):
         self.data = data
-        self.batch_size = batch_size
         self.raw_parameters = raw_parameters

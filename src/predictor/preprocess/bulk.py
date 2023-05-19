@@ -39,7 +39,7 @@ class SimpleMapping:
 
     def __getitem__(self, name: str):
         try:
-            return self.mapping[name]
+            return self.mapping[str(name)]
         except KeyError:
             logger.debug(f"Mapping in {self.name} missing for value: '{name}', is that an error?")
             if self.default is not None:

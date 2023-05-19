@@ -70,7 +70,7 @@ class ModelLearn:
         self.data.loc[self.data["job_name"] == job_name, "processing-time"] = func(current_job_times, mapping_params)
         return inv_func, mapping_params
 
-    def learn(self, split_dataset=True, split_ratio=0.8, batch_size=2, epochs=20):
+    def learn(self, split_dataset=True, split_ratio=0.8, batch_size=8, epochs=20):
         for job in self.data["job_name"].unique():
             logger.info(f"Starting {job}")
 
@@ -89,11 +89,13 @@ class ModelLearn:
 
             # we get the model, and input/output signature
             # TODO: create models from some kind of override file
-            model, signature = create_model_from_params(parameters.keys())
+            model, signature, shape = create_model_from_params(parameters.keys())
 
             # we create the dataset
             DATASET = tf.data.Dataset.from_generator(
-                DictDataGenerator(job_train, self.task_columns[job], 1), output_types=signature
+                DictDataGenerator(job_train, self.task_columns[job]),
+                output_types=signature,
+                output_shapes=shape,
             )
 
             # and do the usual
@@ -106,7 +108,9 @@ class ModelLearn:
 
             if split_dataset:
                 DATASET_VAL = tf.data.Dataset.from_generator(
-                    DictDataGenerator(job_test, self.task_columns[job], 1), output_types=signature
+                    DictDataGenerator(job_test, self.task_columns[job]),
+                    output_types=signature,
+                    output_shapes=shape,
                 )
                 logger.info(f"{job}'s loss = {model.evaluate(DATASET_VAL, verbose=False)}")
 

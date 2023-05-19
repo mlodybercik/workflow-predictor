@@ -1,13 +1,12 @@
 from typing import TYPE_CHECKING, Any, Dict, Set
 
+import keras as K
 import numpy as np
 
 from . import logger
 from .types import ModelABC
 
 if TYPE_CHECKING:
-    import keras as K
-
     from learn.time_preprocess_mapping import InvTransform
 
     from .loader import ModelLoader
@@ -33,11 +32,12 @@ class TFModel(ModelABC):
         self.inv_mapping = inv_mapping
 
     def predict(self, /, **kwargs) -> float:
+        logger.debug(f"Predicting time for node {self.name}")
+        # FIXME: this
         parameters = dict.fromkeys(self.params, "")  # create dictionary from all of the model parameters
         parameters.update(kwargs)  # join them, to make sure that all parameters that are required exist
         parameters = {k: np.array([v], dtype=np.float32) for k, v in parameters.items() if k in self.params}
-
-        return self.inv_mapping(self.model.predict(parameters), self.time_params)
+        return self.inv_mapping(K.backend.get_value(self.model(parameters)).flat[0], self.time_params)
 
 
 class BlankModel(ModelABC):
