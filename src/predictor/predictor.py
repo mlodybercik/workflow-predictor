@@ -44,12 +44,3 @@ class Predictor:
     def load_blueprints(self, app: Flask):
         for handler in self.handlers:
             app.register_blueprint(handler.blueprint)
-
-    # def test(self):
-    #     print(
-    #         self.workflows["securitization-flow"].predict(
-    #             "reload-tactical-tables-post-securitization",
-    #             {"complete-strategic-batch": datetime.now() - timedelta(seconds=30)},
-    #             {"skip-regional-batches": datetime.now() - timedelta(seconds=21.37)},
-    #         )
-    #     )

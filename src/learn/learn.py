@@ -14,7 +14,7 @@ from serialize.model import ModelSerializer
 
 from . import logger
 from .data_generator import DictDataGenerator
-from .stats_callback import InMemoryCSVLogger
+from .stats_callback import InMemoryCSVLogger, RealPerformanceCallback
 from .tf_model import create_model_from_params
 
 logger = logger.getChild("learn")
@@ -82,7 +82,7 @@ class ModelLearn:
 
         # for production, we should train model on all of the data
         if split_dataset:
-            job_train, job_test = train_test_split(job_train, test_size=1 - split_ratio)
+            job_train, job_test = train_test_split(job_train, test_size=1 - split_ratio, random_state=2137)
 
         # first we build the model, to do that we need list of required parameters
         parameters = {}
@@ -104,7 +104,7 @@ class ModelLearn:
         model.compile(optimizer=optimizer[0](**optimizer[1]), **COMPILE_MAPPING[job])
 
         csv_logger = InMemoryCSVLogger()
-        model.fit(DATASET, epochs=epochs, batch_size=batch_size, verbose=False, callbacks=[csv_logger])
+        callbacks = []
 
         if split_dataset:
             DATASET_VAL = tf.data.Dataset.from_generator(
@@ -112,10 +112,18 @@ class ModelLearn:
                 output_types=signature,
                 output_shapes=shape,
             )
-            logger.info(f"{job}'s loss = {model.evaluate(DATASET_VAL, verbose=False)}")
+
+            callbacks = [RealPerformanceCallback(DATASET_VAL, inv_func, mapping_params)]
+
+        # order matters, cos we want to also log those values
+        callbacks.append(csv_logger)
+
+        model.fit(DATASET, epochs=epochs, batch_size=batch_size, verbose=False, callbacks=callbacks)
+
+        csv_output = csv_logger.csv_file.getvalue()
 
         with ModelSerializer(self.dump_path / f"{job}.wfp", "w") as serializer:
-            serializer.save_model_to_zip(model, inv_func, mapping_params, csv_logger.csv_file.getvalue())
+            serializer.save_model_to_zip(model, inv_func, mapping_params, csv_output)
 
     def learn(self, split_dataset=True, split_ratio=0.8, batch_size=8, epochs=20):
         for job in self.unique_jobs:

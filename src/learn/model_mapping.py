@@ -44,7 +44,7 @@ default_model: ModelDefType = (
 )
 
 default_compile: CompileDefType = {
-    "optimizer": (optimizers.SGD, {"learning_rate": 0.0005, "momentum": True}),
+    "optimizer": (optimizers.SGD, {"learning_rate": 0.00005, "momentum": True}),
     "loss": undershoot_penalize,
 }
 
