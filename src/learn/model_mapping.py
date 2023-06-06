@@ -23,14 +23,14 @@ def DEFAULT(job_times: "pd.DataFrame", params: "Dict[str, float]") -> "pd.DataFr
     # calculate them from job_times variable, but to keep the same convetion
     # with usage of INV_DEFAULT we'll pass them from outside ¯\_(ツ)_/¯
     if params["mean"] > 1:
-        return (job_times - params["median"]) / params["mean"]
-    return (job_times - params["min"]) / params["max"]
+        return (job_times - params["mean"]) / params["mean"]
+    return job_times / params["max"]
 
 
 def INV_DEFAULT(predicted: float, params: "Dict[str, float]") -> float:
     if params["mean"] > 1:
-        return (predicted * params["mean"]) + params["median"]
-    return (predicted * params["max"]) + params["min"]
+        return (predicted * params["mean"]) + params["mean"]
+    return predicted * params["max"]
 
 
 default_model: ModelDefType = (
@@ -39,12 +39,12 @@ default_model: ModelDefType = (
         {"units": 60, "activation": "relu"},
         {"units": 30, "activation": "relu"},
         {"units": 10, "activation": "relu"},
-        {"activation": "tanh"},
+        {},
     ),
 )
 
 default_compile: CompileDefType = {
-    "optimizer": (optimizers.SGD, {"learning_rate": 0.00005, "momentum": True}),
+    "optimizer": (optimizers.Adam, {"learning_rate": 0.0005}),
     "loss": undershoot_penalize,
 }
 
@@ -72,7 +72,7 @@ MODEL_MAPPING: Dict[str, ModelDefType] = defaultdict(
 
 
 COMPILE_MAPPING: Dict[str, CompileDefType] = defaultdict(
-    lambda: default_compile,
+    lambda: default_compile.copy(),
     {
         # put compile overrides here
         # "ultra-mega-rare-job-3000": {

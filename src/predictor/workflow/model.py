@@ -37,9 +37,11 @@ class TFModel(ModelABC):
         parameters = dict.fromkeys(self.params, "")  # create dictionary from all of the model parameters
         parameters.update(kwargs)  # join them, to make sure that all parameters that are required exist
         parameters = {k: np.array([v], dtype=np.float32) for k, v in parameters.items() if k in self.params}
-        # we should use .predict due to:
-        # https://keras.io/getting_started/faq/#whats-the-difference-between-model-methods-predict-and-call
-        return self.inv_mapping(K.backend.get_value(self.model.predict(parameters)).flat[0], self.time_params)
+        time = self.inv_mapping(K.backend.get_value(self.model(parameters)).flat[0], self.time_params)
+        if time < 0:
+            logger.warning(f"Predicted time for job {self.name} less than zero, check your models... returning 0")
+            return 0
+        return time
 
 
 class BlankModel(ModelABC):

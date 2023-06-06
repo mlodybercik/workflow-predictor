@@ -41,5 +41,5 @@ def undershoot_penalize(y_true, y_pred):
     error = y_true - y_pred
     condition = tf.less(error, 0)
     over_loss = tf.abs(error)
-    unde_loss = 5 * tf.square(error)
+    unde_loss = tf.square(error)
     return tf.reduce_mean(tf.where(condition, over_loss, unde_loss), -1)

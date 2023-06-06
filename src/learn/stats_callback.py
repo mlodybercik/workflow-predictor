@@ -51,16 +51,16 @@ class RealPerformanceCallback(Callback):
         self.test_dataset = test_dataset
         self.inv_transform = inv_transform
         self.inv_mapping = inv_mapping
+        self.response = np.array([time for _, time in self.test_dataset])
         super().__init__()
 
     def on_epoch_end(self, epoch, logs=None):
         if logs:
-            scores = self.inv_transform(
-                self.model.predict(self.test_dataset, verbose=0, batch_size=1).flatten(), self.inv_mapping
-            )
+            scores = self.inv_transform(self.model.predict(self.test_dataset, verbose=0).flatten(), self.inv_mapping)
+            scores = scores - self.response
             mean, std, min, max = np.mean(scores), np.std(scores), np.min(scores), np.max(scores)
 
-            logs["inv_loss"] = mean
+            logs["inv"] = mean
             logs["inv_std"] = std
             logs["inv_min"] = min
             logs["inv_max"] = max
