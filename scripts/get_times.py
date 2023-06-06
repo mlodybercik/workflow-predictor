@@ -20,54 +20,56 @@ def get_time(text: str):
     except ValueError:
         return datetime.strptime(text, "%d/%m/%Y %H:%M:%S")
 
-grouper = dict()
-done = dict()
+if __name__ == "__main__":
 
-with open("data/maestro-calculated.csv", "w") as file_w:
-    with open("data/maestro-history-clean.csv") as file_r:
-        
-        length = sum(1 for _ in file_r) - 1  # - headers
-        file_r.seek(0)
+    grouper = dict()
+    done = dict()
 
-        reader = csv.DictReader(file_r, lineterminator="\n")
-        headers = {
-            "waiting-time", "processing-time",
-            "total-time", *reader.fieldnames
-        }
+    with open("data/maestro-calculated.csv", "w") as file_w:
+        with open("data/maestro-history-clean.csv") as file_r:
+            
+            length = sum(1 for _ in file_r) - 1  # - headers
+            file_r.seek(0)
 
-        [headers.remove(i) for i in ["status", "event_time"]]
-        writer = csv.DictWriter(file_w, headers, lineterminator="\n")
-        writer.writeheader()
+            reader = csv.DictReader(file_r, lineterminator="\n")
+            headers = {
+                "waiting-time", "processing-time",
+                "total-time", *reader.fieldnames
+            }
 
-        for i, row in enumerate(reader):
-            if not (i % 1000):
-                print(f"{i: 6d}/{length: 6d}", end="\r")
+            [headers.remove(i) for i in ["status", "event_time"]]
+            writer = csv.DictWriter(file_w, headers, lineterminator="\n")
+            writer.writeheader()
 
-            if row["status"] in STATES:
-                if row["uid"] not in grouper:
-                    grouper[row["uid"]] = dict.fromkeys(STATES, None)
-                grouper[row["uid"]][row["status"]] = row
+            for i, row in enumerate(reader):
+                if not (i % 1000):
+                    print(f"{i: 6d}/{length: 6d}", end="\r")
 
-                if not any([i == None for i in grouper[row["uid"]].values()]):
-                    time_success = get_time(grouper[row["uid"]]["SUCCESS"]["event_time"])
-                    time_submitted = get_time(grouper[row["uid"]]["SUBMITTED"]["event_time"])
-                    time_processing = get_time(grouper[row["uid"]]["PROCESSING"]["event_time"])
+                if row["status"] in STATES:
+                    if row["uid"] not in grouper:
+                        grouper[row["uid"]] = dict.fromkeys(STATES, None)
+                    grouper[row["uid"]][row["status"]] = row
 
-                    event_waiting_time = int((time_processing - time_submitted).total_seconds())
-                    event_processing_time = int((time_success - time_processing).total_seconds())
+                    if not any([i == None for i in grouper[row["uid"]].values()]):
+                        time_success = get_time(grouper[row["uid"]]["SUCCESS"]["event_time"])
+                        time_submitted = get_time(grouper[row["uid"]]["SUBMITTED"]["event_time"])
+                        time_processing = get_time(grouper[row["uid"]]["PROCESSING"]["event_time"])
 
-                    # to to samo xD
-                    # event_total_time = event_waiting_time + event_processing_time
-                    event_total_time = int((time_success - time_submitted).total_seconds())
+                        event_waiting_time = int((time_processing - time_submitted).total_seconds())
+                        event_processing_time = int((time_success - time_processing).total_seconds())
 
-                    new_row = {
-                        "waiting-time": event_waiting_time,
-                        "processing-time": event_processing_time,
-                        "total-time": event_total_time,
-                        **row
-                    }
+                        # to to samo xD
+                        # event_total_time = event_waiting_time + event_processing_time
+                        event_total_time = int((time_success - time_submitted).total_seconds())
 
-                    writer.writerow({k: v for k, v in new_row.items() if k in headers})
-                    del grouper[row["uid"]]
-                
+                        new_row = {
+                            "waiting-time": event_waiting_time,
+                            "processing-time": event_processing_time,
+                            "total-time": event_total_time,
+                            **row
+                        }
+
+                        writer.writerow({k: v for k, v in new_row.items() if k in headers})
+                        del grouper[row["uid"]]
+                    
 

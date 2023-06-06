@@ -12,96 +12,98 @@ import shlex
 # 
 # https://docs.python.org/3/library/shlex.html#shlex.split
 
-columns_per_task = defaultdict(set)
 
-# which rows to delete?
-failed = lambda row: not bool(row['failed-job-id'])
-to_remove = [failed]
+if __name__ == "__main__":
+    columns_per_task = defaultdict(set)
 
-# which columns to remove?
-columns_to_remove = {'params', 'failed-job-id', 'failed-job-uid'}
-all_commands = set()
+    # which rows to delete?
+    failed = lambda row: not bool(row['failed-job-id'])
+    to_remove = [failed]
 
-# TODO: use multithreading
-with open('data/maestro-history-clean.csv', 'w') as file_w:
-    # open both files
-    file_1 = open('data/maestro-history.csv', 'r')
-    file_2 = open('data/maestro-history-v2.csv', 'r')
+    # which columns to remove?
+    columns_to_remove = {'params', 'failed-job-id', 'failed-job-uid'}
+    all_commands = set()
 
-    # get sum of lengths
-    length = sum(1 for _ in chain(file_1, file_2)) - 2  # - headers
+    # TODO: use multithreading
+    with open('data/maestro-history-clean.csv', 'w') as file_w:
+        # open both files
+        file_1 = open('data/maestro-history.csv', 'r')
+        file_2 = open('data/maestro-history-v2.csv', 'r')
 
-    # get back to front
-    file_1.seek(0)
-    file_2.seek(0)
+        # get sum of lengths
+        length = sum(1 for _ in chain(file_1, file_2)) - 2  # - headers
 
-    # we dont need second header from the second file
-    # we assume that all the columns are in the same order
-    next(file_2)
+        # get back to front
+        file_1.seek(0)
+        file_2.seek(0)
 
-    reader = csv.DictReader(chain(file_1, file_2), lineterminator='\n')
-    # we need to get all the new columns from files
-    for i, line in enumerate(reader):
-        if not (i % 1000):
-            print(f"[1/2]{i: 6d}/{length: 6d}", end="\r")
+        # we dont need second header from the second file
+        # we assume that all the columns are in the same order
+        next(file_2)
 
-        params = line.pop('params')
-        iterator = iter(shlex.split(params))
-        for item in iterator:
-            next(iterator)
-            parameter = item.removeprefix("--")
-            all_commands.add(parameter)
+        reader = csv.DictReader(chain(file_1, file_2), lineterminator='\n')
+        # we need to get all the new columns from files
+        for i, line in enumerate(reader):
+            if not (i % 1000):
+                print(f"[1/2]{i: 6d}/{length: 6d}", end="\r")
 
-            # as we do it twice anyways, we could do it here...
-            # get list of parameters used for any task
-            columns_per_task[line["job_name"]].add(parameter)
+            params = line.pop('params')
+            iterator = iter(shlex.split(params))
+            for item in iterator:
+                next(iterator)
+                parameter = item.removeprefix("--")
+                all_commands.add(parameter)
 
-    file_1.seek(0)
-    file_2.seek(0)
+                # as we do it twice anyways, we could do it here...
+                # get list of parameters used for any task
+                columns_per_task[line["job_name"]].add(parameter)
 
-    next(file_2)
+        file_1.seek(0)
+        file_2.seek(0)
 
-    # just to be sure we recreate the new reader
-    reader = csv.DictReader(chain(file_1, file_2), lineterminator='\n')
+        next(file_2)
 
-    header = set([*next(reader), *all_commands])
-    header.difference_update(columns_to_remove)
+        # just to be sure we recreate the new reader
+        reader = csv.DictReader(chain(file_1, file_2), lineterminator='\n')
 
-    writer = csv.DictWriter(file_w, header, lineterminator='\n')
-    writer.writeheader()
+        header = set([*next(reader), *all_commands])
+        header.difference_update(columns_to_remove)
 
-    for i, line in enumerate(reader):
-        if not (i % 1000):
-            print(f"[2/2]{i: 6d}/{length: 6d}", end="\r")
+        writer = csv.DictWriter(file_w, header, lineterminator='\n')
+        writer.writeheader()
 
-        params = line.pop('params')
-        iterator = iter(shlex.split(params))
-        parsed_params = dict.fromkeys(all_commands, '')
+        for i, line in enumerate(reader):
+            if not (i % 1000):
+                print(f"[2/2]{i: 6d}/{length: 6d}", end="\r")
 
-        # group params in pairs to extract them into columns
-        for item in iterator:
-            parameter = item.removeprefix("--")
-            parsed_params[parameter] = next(iterator)
+            params = line.pop('params')
+            iterator = iter(shlex.split(params))
+            parsed_params = dict.fromkeys(all_commands, '')
 
-        if (loc := parsed_params['processing-location']):
-            for name in loc.split(","):
-                parsed_params[f'processing-location-is-{name.lower()}'] = 1
+            # group params in pairs to extract them into columns
+            for item in iterator:
+                parameter = item.removeprefix("--")
+                parsed_params[parameter] = next(iterator)
 
-        if (source_type := parsed_params['source-type']):
-            for name in source_type.split(","):
-                parsed_params[f'source-type-is-{name.lower()}'] = 1
+            if (loc := parsed_params['processing-location']):
+                for name in loc.split(","):
+                    parsed_params[f'processing-location-is-{name.lower()}'] = 1
 
-
-        new_row = {**line, **parsed_params}
-
-        # if any of the to_remove macros return true, skip that line
-        if any([i(new_row) for i in to_remove]):
-            writer.writerow({k: v for k, v in new_row.items() if k in header})
+            if (source_type := parsed_params['source-type']):
+                for name in source_type.split(","):
+                    parsed_params[f'source-type-is-{name.lower()}'] = 1
 
 
-    file_1.close()
-    file_2.close()
+            new_row = {**line, **parsed_params}
 
-with open("data/task-columns.yml", "w") as file:
-    sorted_columns = sorted(columns_per_task.items(), key=lambda a: a[0])
-    file.write(yaml.dump({key: sorted(row) for key, row in sorted_columns}, Dumper=yaml.CDumper))
+            # if any of the to_remove macros return true, skip that line
+            if any([i(new_row) for i in to_remove]):
+                writer.writerow({k: v for k, v in new_row.items() if k in header})
+
+
+        file_1.close()
+        file_2.close()
+
+    with open("data/task-columns.yml", "w") as file:
+        sorted_columns = sorted(columns_per_task.items(), key=lambda a: a[0])
+        file.write(yaml.dump({key: sorted(row) for key, row in sorted_columns}, Dumper=yaml.CDumper))
