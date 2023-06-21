@@ -2,9 +2,8 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Dict, Sequence, Tuple
 
 import keras.layers as layers
+import keras.losses as losses
 import keras.optimizers as optimizers
-
-from .tf_model import undershoot_penalize
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -36,16 +35,16 @@ def INV_DEFAULT(predicted: float, params: "Dict[str, float]") -> float:
 default_model: ModelDefType = (
     (layers.Dense, layers.Dense, layers.Dense),
     (
-        {"units": 60, "activation": "relu"},
-        {"units": 30, "activation": "relu"},
-        {"units": 10, "activation": "relu"},
+        {"units": 60, "activation": "sigmoid"},
+        {"units": 60, "activation": "sigmoid"},
+        {"units": 60},
         {},
     ),
 )
 
 default_compile: CompileDefType = {
-    "optimizer": (optimizers.Adam, {"learning_rate": 0.0005}),
-    "loss": undershoot_penalize,
+    "optimizer": (optimizers.Adam, {"learning_rate": 0.005}),
+    "loss": losses.MeanAbsoluteError(reduction="sum"),
 }
 
 # put neccessary functions here

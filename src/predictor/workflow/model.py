@@ -39,7 +39,6 @@ class TFModel(ModelABC):
         parameters = {k: np.array([v], dtype=np.float32) for k, v in parameters.items() if k in self.params}
         time = self.inv_mapping(K.backend.get_value(self.model(parameters)).flat[0], self.time_params)
         if time < 0:
-            logger.warning(f"Predicted time for job {self.name} less than zero, check your models... returning 0")
             return 0
         return time
 

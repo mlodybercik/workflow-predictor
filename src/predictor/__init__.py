@@ -22,6 +22,4 @@ def get_app() -> Flask:
     predictor.load_blueprints(app)
     app.predictor = predictor
 
-    print(app.url_map)
-
     return app
