@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 from keras.callbacks import Callback, CSVLogger
 
-from . import logger
+from worklogger import get_logger
 
 if TYPE_CHECKING:
     import tensorflow as tf
 
     from .model_mapping import InvTransform
 
-logger = logger.getChild("callbacks")
+logger = get_logger(__name__)
 
 
 class InMemoryCSVLogger(CSVLogger):

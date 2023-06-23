@@ -1,15 +1,15 @@
-import logging
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from flask import Blueprint, jsonify, request
 
 from predictor.preprocess.mapping import MAPPING
+from worklogger import get_logger
 
 if TYPE_CHECKING:
     from .workflow.workflow import Workflow
 
-logger = logging.getLogger(__name__).getChild("endpoint")
+logger = get_logger(__name__)
 
 
 class WorkflowRequestHandler:

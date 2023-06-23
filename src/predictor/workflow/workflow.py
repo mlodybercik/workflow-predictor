@@ -10,9 +10,9 @@ if TYPE_CHECKING:
     from .model import ModelBank
     from .types import ModelABC
 
-from . import logger
+from worklogger import get_logger
 
-logger = logger.getChild("workflow")
+logger = get_logger(__name__)
 
 
 class CurrentNodeStatus(Enum):

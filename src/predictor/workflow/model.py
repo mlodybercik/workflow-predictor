@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING, Any, Dict, Set
 import keras as K
 import numpy as np
 
-from . import logger
+from worklogger import get_logger
+
 from .types import ModelABC
 
 if TYPE_CHECKING:
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
 
     from .loader import ModelLoader
 
-logger = logger.getChild("model")
+logger = get_logger(__name__)
 
 
 class TFModel(ModelABC):

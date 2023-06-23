@@ -5,14 +5,14 @@ from yaml import CLoader
 from yaml import load as yaml_load
 
 from serialize.model import ModelSerializer
+from worklogger import get_logger
 
-from . import logger
 from .model import ModelBank, TFModel
 from .types import Loader
 from .utils import list_dir
 from .workflow import Workflow
 
-logger = logger.getChild("loader")
+logger = get_logger(__name__)
 
 
 class WorkflowLoader(Loader):

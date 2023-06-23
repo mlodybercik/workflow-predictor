@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
         get_app().run("0.0.0.0", 5000, debug=False, load_dotenv=True)
     elif parsed.action == "learn":
-        from learn import ModelLearn
+        from learn.learn import ModelLearn
 
         learner = ModelLearn(parsed.calculated, parsed.task_column, parsed.destination)
         if parsed.job:

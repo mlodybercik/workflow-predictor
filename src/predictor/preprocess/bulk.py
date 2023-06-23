@@ -1,8 +1,8 @@
 from typing import Any, Dict, Optional, Type
 
-from . import logger
+from worklogger import get_logger
 
-logger = logger.getChild("bulk")
+logger = get_logger(__name__)
 
 # fmt: off
 EMPTY = {}
@@ -60,7 +60,7 @@ class SimpleChangeType:
         try:
             return {name: self.type(value)}
         except Exception:  # we should not just catch all the types
-            logger.debug(f"ChangeType in {self.name} raised exception for value: '{name}'")
+            logger.debug(f"ChangeType in {self.name} raised exception for value: '{value}'")
             if self.default is not None:
                 return {name: self.default}
             raise KeyError(f"simple change type failed for {self.name}")

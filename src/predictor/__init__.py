@@ -3,15 +3,17 @@ from pathlib import Path
 
 from flask import Flask
 
-from .logging import init_logger
+from worklogger import get_logger
+
 from .predictor import Predictor
+
+logger = get_logger(__name__)
 
 GRAPH_DEFINITIONS_LOCATION = os.environ.get("GRAPH_DEFINITIONS_LOCATION", "/tmp/workflows/")
 MODEL_DEFINITIONS_LOCATION = os.environ.get("MODEL_DEFINITIONS_LOCATION", "/tmp/models/")
 
 
 def get_app() -> Flask:
-    logger = init_logger(None)
     logger.info("Creating app...")
     app = Flask(__name__)
 

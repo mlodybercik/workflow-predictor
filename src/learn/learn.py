@@ -11,13 +11,13 @@ from yaml import CLoader, load
 from learn.model_mapping import COMPILE_MAPPING, MODEL_MAPPING, TIME_MAPPING
 from predictor.preprocess.mapping import MAPPING
 from serialize.model import ModelSerializer
+from worklogger import get_logger
 
-from . import logger
 from .data_generator import DictDataGenerator
 from .stats_callback import InMemoryCSVLogger, RealPerformanceCallback
 from .tf_model import create_model_from_params
 
-logger = logger.getChild("learn")
+logger = get_logger(__name__)
 
 
 class ModelLearn:

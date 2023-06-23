@@ -10,12 +10,12 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import numpy as np
 import tensorflow as tf
 
-from . import logger
+from worklogger import get_logger
 
 if TYPE_CHECKING:
     from learn.model_mapping import InvTransform
 
-logger = logger.getChild("model")
+logger = get_logger(__name__)
 
 
 class ModelSerializer:
