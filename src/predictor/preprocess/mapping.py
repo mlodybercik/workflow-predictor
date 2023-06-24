@@ -1,9 +1,28 @@
 # flake8: noqa: F405
-from typing import Callable, Dict, Union
+import typing as T
 
 from .bulk import *  # noqa: F405
 
-MAPPING: Dict[str, Callable[[str, Any], Dict[str, Union[int, str]]]] = {
+USABLE_PARAMETERS = {
+    "batch-instance-seq",
+    "batch-workflow",
+    "bsinp-run-id",
+    "business-day",
+    "hac-run-id",
+    "ib-run-id",
+    "pb-run-id",
+    "process-flag",
+    "processing-location",
+    "rd-run-id",
+    "regulatory-approaches",
+    "rules-branch",
+    "skip-ler",
+    "skip-mdl-landing",
+    "skip-mdl-out",
+    "source-type",
+}
+
+MAPPING: T.Dict[str, T.Callable[[str, T.Any], T.Dict[str, T.Union[int, str]]]] = {
     "api-version": drop,
     "approach": drop,
     "as-of-date": drop,
@@ -35,3 +54,8 @@ MAPPING: Dict[str, Callable[[str, Any], Dict[str, Union[int, str]]]] = {
     "skip-mdl-out": skip_mdl_out,
     "source-type": source_type,
 }
+
+
+def generate_from_order(params: T.Sequence[T.Any]):
+    length = len(params)
+    return {param: (i / length) - 0.5 for i, param in enumerate(params)}

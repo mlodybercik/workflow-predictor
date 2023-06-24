@@ -1,9 +1,8 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Sequence
 
 from flask import Blueprint, jsonify, request
 
-from predictor.preprocess.mapping import MAPPING
 from worklogger import get_logger
 
 if TYPE_CHECKING:
@@ -15,10 +14,16 @@ logger = get_logger(__name__)
 class WorkflowRequestHandler:
     workflow: "Workflow"
     blueprint: Blueprint
+    node_parameters: Dict[str, Sequence[str]]
 
     def __init__(self, workflow: "Workflow"):
         self.workflow = workflow
         self.blueprint = Blueprint(self.workflow.name, __name__, url_prefix=f"/{self.workflow.name}")
+
+        self.node_parameters = {}
+        for node_name, node in self.workflow.bank.items():
+            self.node_parameters[node_name] = node.mapping_parameters.keys()
+
         self.register_paths()
 
     def register_paths(self):
@@ -64,18 +69,28 @@ class WorkflowRequestHandler:
                 processing_dict[done] = datetime.fromtimestamp(int(time))
 
             # im not sure how we will receive those parameters, so for now ill assume dictionary {param: value, ...}
-            for parameter, value in json["parameters"].items():
-                if not isinstance(parameter, str):
-                    raise TypeError("parameter", parameter)
+            for node, node_params in json["parameters"].items():
+                if node not in self.workflow.bank:
+                    logger.info(f"'{node}' not in '{self.workflow.name}'")
 
-                if not isinstance(value, (str, int, float)):
-                    raise TypeError(f"parameter: {parameter}", value)
+                if not isinstance(node_params, dict):
+                    raise TypeError("parameter", node)
 
-                if parameter not in MAPPING:
-                    logger.warning(f"unknown run parameter '{parameter}'")
-                else:
-                    # also have to map ever parameter, and then pass it into predict
-                    parameters_dict.update(MAPPING[parameter](parameter, value))
+                for parameter, value in node_params.items():
+                    if not any(parameter in parameters for parameters in self.node_parameters.values()):
+                        continue
+
+                    if not isinstance(parameter, str):
+                        raise TypeError("parameter", parameter)
+
+                    if isinstance(value, str):
+                        parameters_dict[parameter] = value
+
+                    elif isinstance(value, (int, float)):
+                        parameters_dict[parameter] = str(int(value))
+
+                    else:
+                        raise TypeError(f"parameter: {parameter}", value)
 
             return jsonify(self.workflow.predict(destination, done_dict, processing_dict, parameters_dict, time)), 200
 

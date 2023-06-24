@@ -44,8 +44,9 @@ if __name__ == "__main__":
         exit(1)
 
     for row in job_dict.values():
+        ret["parameters"][row["job_name"]] = {}
         for param, value in row.items():
-            ret["parameters"][param] = value
+            ret["parameters"][row["job_name"]][param] = value
 
     start_time = get_time(job_dict[order[0]]["cmd_time"])
     delta_time = datetime.now() - start_time

@@ -4,6 +4,7 @@ from typing import Dict
 from yaml import CLoader
 from yaml import load as yaml_load
 
+from predictor.preprocess.mapping import generate_from_order
 from serialize.model import ModelSerializer
 from worklogger import get_logger
 
@@ -65,8 +66,9 @@ class WorkflowLoader(Loader):
 class ModelLoader(Loader):
     def load(self, name: str):
         with ModelSerializer(self.location / f"{name}.wfp", "r") as archive:
-            model, meta, inv_func = archive.load_model_from_zip()
-        return TFModel(meta, model, inv_func)
+            model, meta, parameters, inv_func = archive.load_model_from_zip()
+        parameters = {k: generate_from_order(v) for k, v in parameters.items()}
+        return TFModel(meta, model, parameters, inv_func)
 
     @staticmethod
     def filter_file(file: Path):

@@ -4,7 +4,7 @@ from datetime import datetime
 from io import BytesIO
 from json import dumps, loads
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
@@ -56,9 +56,10 @@ class ModelSerializer:
         model: tf.keras.Model,
         inverse_mapping: "InvTransform",
         mapping_params: Dict[str, float],
+        params: Dict[str, List[Any]],
         stats: Optional[str] = None,
         *args,
-        **params,
+        **kwargs,
     ):
         if not self._zip:
             raise RuntimeError("class should be handled only with with keyword")
@@ -79,9 +80,10 @@ class ModelSerializer:
         self._zip.writestr("declaration.json", dumps(model_declaration).encode())
         self._zip.writestr("weights.json", dumps(model_weights).encode())
         self._zip.writestr("meta/info.json", dumps(info).encode())
+        self._zip.writestr("parameters.json", dumps(params).encode())
 
-        if params:
-            self._zip.writestr("meta/params.json", dumps(params).encode())
+        if kwargs:
+            self._zip.writestr("meta/params.json", dumps(kwargs).encode())
         if args:
             self._zip.writestr("meta/args.json", dumps(args).encode())
         if stats:
@@ -98,13 +100,15 @@ class ModelSerializer:
                 return self._zip.read(item).decode()
         return None
 
-    def load_model_from_zip(self) -> Tuple[tf.keras.Model, Dict[str, Any], "InvTransform"]:
+    def load_model_from_zip(self) -> Tuple[tf.keras.Model, Dict[str, Any], Dict[str, Any], "InvTransform"]:
         # serializing and deserializing in this way requires the whole model to
         # to be decompressed into memory, and then loaded as a model. this could
         # cause problems when handling huge models
 
         model_declaration = loads(self._zip.read("declaration.json").decode())
         model_weights = [np.array(layer) for layer in loads(self._zip.read("weights.json").decode())]
+
+        parameters = loads(self._zip.read("parameters.json").decode())
 
         info = loads(self._zip.read("meta/info.json").decode())
         raw_inv_func = marshal.loads(self._zip.read("inverse_mapping.pyfunc"))
@@ -116,4 +120,4 @@ class ModelSerializer:
         model = tf.keras.Model.from_config(model_declaration)
         model.set_weights(model_weights)
 
-        return model, info, inv_func
+        return model, info, parameters, inv_func

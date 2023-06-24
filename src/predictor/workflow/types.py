@@ -31,6 +31,7 @@ class Loader(ABC):
 
 
 class ModelABC(ABC):
+    mapping_parameters: dict
     type: str
 
     @abstractmethod

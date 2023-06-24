@@ -8,3 +8,6 @@ exclude = "scripts/,temp/"
 
 [tool.isort]
 profile = "black"
+
+[tool.autoflake]
+check = true

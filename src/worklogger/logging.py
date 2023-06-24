@@ -7,6 +7,8 @@ import os
 import typing as T
 from pathlib import Path
 
+from flask import Flask
+
 LOGGING_CONFIG_LOCATION = os.environ.get("LOGGING_CONFIG_LOCATION", False)
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL", "DEBUG").upper()
 
@@ -31,3 +33,8 @@ def get_logger(name: str, level: T.Optional[str] = None) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging_level)
     return logger
+
+
+def set_up_flask_logger(app: Flask):
+    formatter = logging.Formatter("%(message)s")
+    [handler.setFormatter(formatter) for handler in app.logger.handlers]

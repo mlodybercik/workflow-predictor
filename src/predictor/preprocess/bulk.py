@@ -9,7 +9,6 @@ logger = get_logger(__name__)
 DEFAULT_BOOL = {"0": 0, "1": 1, 0: 0, 1: 1, "false": 0, "true": 1, "False": 0, "True": 1, False: 0, True: 1}
 
 # fmt: off
-EMPTY = {}
 BATCH_WORKFLOW_MAPPING = {
     "STRATEGIC_PAC": 0, "STRATEGIC_EUR": 1, "STRATEGIC_AMS": 2, "STRATEGIC_SEC": 3, "STRATEGIC_CH": 4,
 }
@@ -24,11 +23,12 @@ SKIP_MDL_LANDING_MAPPING = {nan: -1, **DEFAULT_BOOL}
 SKIP_MDL_OUT_MAPPING = {nan: 0, **DEFAULT_BOOL}
 SOURCE_TYPE_LIST = set(["IB", "PB"])
 SKIP_LER_MAPPING = {nan: -1, **DEFAULT_BOOL}
+
 # fmt: on
 
 
 def drop(_, __):
-    return EMPTY
+    return {}
 
 
 def pass_(name: str, value: T.Any):

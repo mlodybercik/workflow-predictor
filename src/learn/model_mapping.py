@@ -68,7 +68,7 @@ MODEL_MAPPING: Dict[str, ModelDefType] = defaultdict(
         "start-strategic-batch": short_model,
         "init-strategic-batch": short_model,
         "open-date-card": short_model,
-        # "f1-notification-trigger": short_model,
+        "f1-notification-trigger": short_model,
         # put model shape overrides here
         # "ultra-mega-rare-job-3000": (
         #       (layers.Dense, layers.Conv1D, layers.NukeNagasaki),
