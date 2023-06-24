@@ -35,16 +35,18 @@ def INV_DEFAULT(predicted: float, params: "Dict[str, float]") -> float:
 default_model: ModelDefType = (
     (layers.Dense, layers.Dense, layers.Dense),
     (
-        {"units": 60, "activation": "sigmoid"},
-        {"units": 60, "activation": "sigmoid"},
-        {"units": 60},
+        {"units": 60, "activation": "relu"},
+        {"units": 20, "activation": "relu"},
+        {"units": 10, "activation": "relu"},
         {},
     ),
 )
 
+short_model: ModelDefType = ((layers.Dense, layers.Dense), ({"units": 10}, {"units": 10, "activation": "relu"}, {}))
+
 default_compile: CompileDefType = {
-    "optimizer": (optimizers.Adam, {"learning_rate": 0.005}),
-    "loss": losses.MeanAbsoluteError(reduction="sum"),
+    "optimizer": (optimizers.Adam, {"learning_rate": 0.0001}),
+    "loss": losses.MeanSquaredError(),
 }
 
 # put neccessary functions here
@@ -61,6 +63,12 @@ TIME_MAPPING: Dict[str, Tuple[TransformFunc, InvTransform]] = defaultdict(
 MODEL_MAPPING: Dict[str, ModelDefType] = defaultdict(
     lambda: default_model,
     {
+        "b3-calc-completed": short_model,
+        "complete-strategic-harmonization-job": short_model,
+        "start-strategic-batch": short_model,
+        "init-strategic-batch": short_model,
+        "open-date-card": short_model,
+        # "f1-notification-trigger": short_model,
         # put model shape overrides here
         # "ultra-mega-rare-job-3000": (
         #       (layers.Dense, layers.Conv1D, layers.NukeNagasaki),
