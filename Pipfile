@@ -10,7 +10,7 @@ flask = "*"
 pyyaml = "*"
 gunicorn = "*"
 networkx = "*"
-tensorflow = "==2.11.0"
+tensorflow = "==2.11.1"
 
 [dev-packages]
 python-dotenv = "*"

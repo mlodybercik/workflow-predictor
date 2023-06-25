@@ -18,7 +18,7 @@ If you deal with long task pipelines that take different amounts of time based o
 
 
 ## Development
-This project uses `pipenv` so it's the first and most important thing you'll need. I use python 3.9, because of my addiction to walrus `:=` and some QOL methods in standard library. `Tensorflow` is locked to `2.11.0` because of my old GPU I have in my homelab that accelerates the Deep Learning part of the project. Project is mainly built to be run in Linux Docker containers, but there is option for baremetal. I use `pre-commit` for code quality maintainment.
+This project uses `pipenv` so it's the first and most important thing you'll need. I use python 3.9, because of my addiction to walrus `:=` and some QOL methods in standard library. `Tensorflow` is locked to `2.11` because of my old GPU I have in my homelab that accelerates the Deep Learning part of the project. Project is mainly built to be run in Linux Docker containers, but there is option for baremetal. I use `pre-commit` for code quality maintainment.
 To set the environment up:
 ```bash
 python3 -m pip install pipenv
