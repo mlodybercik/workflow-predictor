@@ -76,6 +76,8 @@ class WorkflowRequestHandler:
                 if not isinstance(node_params, dict):
                     raise TypeError("parameter", node)
 
+                parameters_dict[node] = {}
+
                 for parameter, value in node_params.items():
                     if not any(parameter in parameters for parameters in self.node_parameters.values()):
                         continue
@@ -84,10 +86,10 @@ class WorkflowRequestHandler:
                         raise TypeError("parameter", parameter)
 
                     if isinstance(value, str):
-                        parameters_dict[parameter] = value
+                        parameters_dict[node][parameter] = value
 
                     elif isinstance(value, (int, float)):
-                        parameters_dict[parameter] = str(int(value))
+                        parameters_dict[node][parameter] = str(int(value))
 
                     else:
                         raise TypeError(f"parameter: {parameter}", value)

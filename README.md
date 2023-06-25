@@ -37,7 +37,7 @@ Place them into `data/` directory, and run `python scripts/make.py`. It'll forma
 
 Next, we have to start the learning process. We can - in very granular way - change how we process each task by passing different basic parameters to learning script `... learn --batch 8 --epochs 15 --job <job-name>`, or we could change more advanced settings like model shape, the optimizer or time mapping functions by editing `learn/model_mapping.py` file (you could even use convolution if you really wanted to). After the deep learning stage, model is serialized with all the neccesary data to convert mapped time back into real time used in estimation.
 
-Inside the `predictor/preprocess/mapping.py` you will have to implement mapping functions for your tasks parameters, that will turn for example `{"param1": "dsa", "param2": 912384543543}` into: `{"param1_first_letter": 12, "param2_is_big": 1, "param2_ends_with3": 1, "param2_ends_with5": 0}` so the models could digest the data in proper way.
+Before the deep learning stage, every parameter for each task (separately) is checked, how does it influence the mean execution time of that perticular task. We generate list of parameter keys sorted by resulting mean with that perticular parameter value. Each value in that list gets assigned number from -1 to 1. (-1 when average is the lowest for that parameter and 1 for max) and we give those values to inputs of each model (**if some parameter has not been seen with a given task, we assume that it doesn't influence the mean execution time**). This could be good for lots of parameters that hugely influence the mean value, but not necessarily when having lots of similar values and then few outliers. This could be easily dealt with though.
 
 ---
 
@@ -65,12 +65,17 @@ Request structure is as follows:
     "processing": {
         // currently executing nodes, we pass the task identifier (its name) as a key
         // and epoch time of the beggining as value
+        "make-a-sandwich": 1112729820
     },
     "done": {
         // same as the above, but epoch time of finishing the task
+        "task-a": 1112729800,
+        "task-b": 1112729700
     },
     "parameters": {
-        // we pass all of the parameters here with key as its name and value as its value
+        // we pass all of the parameters for given task here with key as its name and value as its value
+        // you can skip parameters for tasks that are done, they wont be used to predict either way
+        "make-a-sandwich": {"param-a": 72, "param-b": "with_bread"}
     }
 }
 ```

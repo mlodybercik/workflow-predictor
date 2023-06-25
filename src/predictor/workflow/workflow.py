@@ -120,11 +120,20 @@ class Workflow:
             # if task is done, set its time as 0
             if node_status[node].status == CurrentNodeStatus.DONE:
                 prediction = 0
+                continue
+
+            try:
+                task_parameters = parameters[node]
+            except KeyError:
+                task_parameters = {}
+                logger.warning(f"Execution parameters missing for '{node}', using defaults...")
+
+            prediction = self.bank[node].predict(**task_parameters)
 
             # if task is being processed, set its time as difference between time since beggining and our prediction
-            elif node_status[node].status == CurrentNodeStatus.PROCESSING:
+            if node_status[node].status == CurrentNodeStatus.PROCESSING:
                 duration = (now - node_status[node].started).total_seconds()
-                prediction = self.bank[node].predict(**parameters) - duration
+                prediction -= duration
                 if prediction < 0:
                     logger.info(f"Node '{node}' exceded predicted time of {duration:.2f} by {-prediction:.2f}!")
                     prediction = 0
@@ -134,7 +143,6 @@ class Workflow:
                 for requirement in self.graph.predecessors(node):
                     if node_status[requirement].status != CurrentNodeStatus.WAITING:
                         logger.debug(f"Node '{node}' waiting on '{requirement}'")
-                prediction = self.bank[node].predict(**parameters)
 
             node_status[node].time = prediction
 

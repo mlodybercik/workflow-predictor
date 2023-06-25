@@ -85,15 +85,6 @@ if __name__ == "__main__":
                 parameter = item.removeprefix("--")
                 parsed_params[parameter] = next(iterator)
 
-            if (loc := parsed_params['processing-location']):
-                for name in loc.split(","):
-                    parsed_params[f'processing-location-is-{name.lower()}'] = 1
-
-            if (source_type := parsed_params['source-type']):
-                for name in source_type.split(","):
-                    parsed_params[f'source-type-is-{name.lower()}'] = 1
-
-
             new_row = {**line, **parsed_params}
 
             # if any of the to_remove macros return true, skip that line
