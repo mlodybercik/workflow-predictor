@@ -67,8 +67,14 @@ if __name__ == "__main__":
         ret["done"][current_job] = int(job_time.timestamp())
         i += 1
 
-    for parameters in ret["parameters"].values():
+    for job, parameters in ret["parameters"].items():
         parameters.pop("processing-time", 0)
+        parameters.pop("job_name", 0)
+        parameters.pop("workflow_name", 0)
+        parameters.pop("cmd_time", 0)
+        for parameter, value in parameters.copy().items():
+            if value == "":
+                del parameters[parameter]
 
     print(json.dumps(ret))
 

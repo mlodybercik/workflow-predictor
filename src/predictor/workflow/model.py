@@ -1,4 +1,5 @@
 from collections import UserDict
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Dict
 
 import keras as K
@@ -38,6 +39,7 @@ class TFModel(ModelABC):
         self.model = model
         self.inv_mapping = inv_mapping
 
+    @lru_cache
     def predict(self, /, **kwargs) -> float:
         logger.debug(f"Predicting time for node {self.name}")
 

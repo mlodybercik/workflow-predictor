@@ -71,8 +71,8 @@ MODEL_MAPPING: Dict[str, ModelDefType] = defaultdict(
         "f1-notification-trigger": short_model,
         # put model shape overrides here
         # "ultra-mega-rare-job-3000": (
-        #       (layers.Dense, layers.Conv1D, layers.NukeNagasaki),
-        #       ({"units": 30}, {"filters": 5, "kernel_size": 2}, {"boom": True})
+        #       (layers.Dense, layers.Conv1D, layers.Sandwich),
+        #       ({"units": 30}, {"filters": 5, "kernel_size": 2}, {"cheese": True}, {})
         # )
     },
 )
