@@ -84,3 +84,22 @@ Request structure is as follows:
 $ curl -X GET -H 'Content-Type: application/json' -d '<big-json-here>' http://localhost:5000/strategic-flow/predict/reload-b3-tables/
 {"path": ["node1", "node2", ..., "nodeN_in_path"], "timedelta": 2137.69420}
 ```
+
+## Things to be improved/changed
+1. BIG ~~klamoty~~ REQUESTS. If users wants to know time estimation of an task that has a long path, user has to send huge json requests (multiple kb in size). We could mitigate some of that problem by adding another field in request structure that would contain common parameters for all of the tasks that would be overwritten by non-default parameters in `parameters` field.
+
+2. Request handling could be sped up by using Redis or LRU cache, when user often sends similar requests with similar generated paths. If node `A` has been predicted with set of parameters `a` in one request, those can be used in another request if user requests another path that goes through node `A` with the same parameters. In testing, we could achieve (in rather big workflow, >20 path length) about 10x speed improvement just by adding `@lru_cache`. For now, its enabled.
+
+3. Currently in learning preamble, we reduce amount of parameters by checking if more than one (other than null) parameter exists, then for every existing value for that parameter we calculate how does it influence mean for that task. We sort those parameters by mean and map those values ***uniformly*** from -1 to 1. Then we map every task like that and use those values to teach the deep learning models. We save this list (without the values, just the order) in `.wfp` files, and then use the same algorithm to recreate the mapping when deserializing models. The issue is we assume that every parameter influences the mean and every other parameter value in order influences the mean by constant value. This can't be this easy. We should calculate the ratio to mean in whole set and then save the mapping without the need to recalculate it after deserializing. We could even go as far as mapping those ratios to values between -1 and 1  Now we do:
+```python
+ordered_params = {'S': -0.5, 'I': -0.4, 'J': -0.3, 'K': -0.2, 'R': -0.1, 'P': 0.0, 'O': 0.1, 'N': 0.2, 'M': 0.3, 'L': 0.4}
+# but this in reality could very much be as follows
+ordered_params = {'S': -0.78, 'I': -0.76, 'J': -0.72, 'K': 0.0, 'R': 0.01, 'P': 0.02, 'O': 0.75, 'N': 0.78, 'M': 0.82, 'L': 0.83}
+```
+In case of receiving a parameter that we don'h have in our mapping, we could surgically add this value to json in `<model_file>.wfp/meta.json` without re-learning the whole dataset.
+
+4. We rely on the fact that we can teach our models in advance on a big set of parameters but what if we could have a functionality to collect those parameters for future use? 🤔 Also, we could store some statistics about executed tasks, after receiving data about real time.
+5. We don't need to have loaded all models in memory at all times, as those models aren't that big, we could just lazy-load them.
+6. We assume that infinite amount of tasks can be executing at the same time. We could add some kind of smart-ish de-queuer that would give us worst and best case scenario for given path that has to execute more tasks than the system is capable, or we could give it the scheduling rules to get propper estimations.
+7. When in production we don't want to restart the whole system just to add new or update models/workflows. We could have some kind of admin endpoint that would make system soft-restart, dropping all models, caches, workflows and reloading them from disk.
+8. Redo the pathfinding algorithm 🙈🙊🙉
